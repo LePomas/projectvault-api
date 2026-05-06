@@ -1,0 +1,28 @@
+services:
+  api:
+    build: .
+    container_name: projectvault-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - ./app:/app/app
+
+  db:
+    image: postgres:16
+    container_name: projectvault-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: projectvault
+      POSTGRES_USER: projectvault
+      POSTGRES_PASSWORD: projectvault
+    ports:
+      - "5432:5432"
+    volumes:
+      - projectvault-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  projectvault-postgres-data:
