@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AppError
@@ -10,14 +10,17 @@ from app.db.session import get_db
 from app.models.user import User
 from app.repositories.users import UserRepository
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
-    token: Annotated[str | None, Depends(oauth2_scheme)],
+    credentials: Annotated[
+        HTTPAuthorizationCredentials | None,
+        Depends(bearer_scheme),
+    ],
     db: Annotated[Session, Depends(get_db)],
 ) -> User:
-    if token is None:
+    if credentials is None:
         raise AppError(
             status_code=401,
             code="MISSING_TOKEN",
@@ -25,7 +28,7 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user_id = decode_access_token(token)
+    user_id = decode_access_token(credentials.credentials)
     user = UserRepository(db).get_by_id(user_id)
     if user is None:
         raise AppError(
