@@ -79,7 +79,11 @@ class ProjectMember(Base):
     project: Mapped[Project] = relationship(back_populates="members")
 
     __table_args__ = (
-        UniqueConstraint("project_id", "user_id", name="project_members_project_user_key"),
+        UniqueConstraint(
+            "project_id",
+            "user_id",
+            name="project_members_project_user_key",
+        ),
         CheckConstraint(
             "role IN ('owner', 'participant')",
             name="project_members_role_check",
