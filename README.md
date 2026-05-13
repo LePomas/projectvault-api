@@ -2,16 +2,25 @@
 
 Secure project profiles and document management API.
 
-## Stack
+## Implemented Stack
 
 - Python 3.12+
 - FastAPI
 - PostgreSQL
 - SQLAlchemy
-- Docker
+- Docker Compose
+- Pydantic v2
+- JWT authentication
+- pytest
+- httpx
+- Ruff
+
+## Planned / Roadmap
+
 - AWS S3
 - AWS Lambda
 - GitHub Actions / GitLab CI
+- Alembic migration workflow
 
 ## Local development
 
@@ -19,7 +28,7 @@ Secure project profiles and document management API.
 
 ```bash
 cp .env.example .env
-`````
+```
 
 ### 2. Start services
 
@@ -65,7 +74,7 @@ tests/              Automated tests
 docs/               Technical documentation
 ```
 
-## Phase 0 status
+## Initial setup status
 
 * [x] Repository created
 * [x] Project structure created
