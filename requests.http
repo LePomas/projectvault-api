@@ -1,0 +1,193 @@
+@baseUrl = http://localhost:8000
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzc4Njk1NTU2LCJpYXQiOjE3Nzg2OTE5NTZ9.nLvNFSOjv6BYHVa76nN8BY8oVbRU1-7kmBseG9PeBCA
+@projectId = 2
+@bobToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiZXhwIjoxNzc4Njk1MjkyLCJpYXQiOjE3Nzg2OTE2OTJ9.E6CvGK7K1sIb90op2OQIrBJhbITTRwmECXXUHnQHpT0
+
+### Fase 0 - Health check
+GET {{baseUrl}}/health
+
+### Fase 0 - OpenAPI JSON
+GET {{baseUrl}}/openapi.json
+
+### Fase 1 - Registrar usuario Ana
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "login": "ana",
+  "email": "ana@example.com",
+  "password": "super-secret-123"
+}
+
+### Fase 1 - Registrar login duplicado
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "login": "ana",
+  "email": "ana.duplicate@example.com",
+  "password": "super-secret-123"
+}
+
+### Fase 1 - Registrar email duplicado
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "login": "ana_duplicate",
+  "email": "ana@example.com",
+  "password": "super-secret-123"
+}
+
+### Fase 1 - Login Ana
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "login": "ana",
+  "password": "super-secret-123"
+}
+
+### Fase 1 - Usuario autenticado
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+### Fase 1 - Usuario autenticado sin token
+GET {{baseUrl}}/auth/me
+
+### Fase 1 - Usuario autenticado con token invalido
+GET {{baseUrl}}/auth/me
+Authorization: Bearer invalid-token
+
+### Fase 1 - Login con credenciales invalidas
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "login": "ana",
+  "password": "wrong-password"
+}
+
+### Fase 2 - Crear proyecto
+POST {{baseUrl}}/projects
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Project Alpha",
+  "description": "Initial description"
+}
+
+### Fase 2 - Listar proyectos accesibles
+GET {{baseUrl}}/projects
+Authorization: Bearer {{token}}
+
+### Fase 2 - Consultar detalle de proyecto
+GET {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{token}}
+
+### Fase 2 - Actualizar proyecto
+PATCH {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Project Alpha Updated",
+  "description": "Updated description"
+}
+
+### Fase 2 - Actualizar solo descripcion
+PATCH {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "description": null
+}
+
+### Fase 2 - Proyectos sin token
+GET {{baseUrl}}/projects
+
+### Fase 2 - Registrar usuario Bob
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "login": "bob",
+  "email": "bob@example.com",
+  "password": "super-secret-123"
+}
+
+### Fase 2 - Login Bob
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "login": "bob",
+  "password": "super-secret-123"
+}
+
+### Fase 2 - Bob no puede ver proyecto de Ana
+GET {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{bobToken}}
+
+### Fase 2 - Bob no lista proyectos de Ana
+GET {{baseUrl}}/projects
+Authorization: Bearer {{bobToken}}
+
+### Fase 2 - Eliminar proyecto como owner
+DELETE {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{token}}
+
+### Fase 2 - Verificar proyecto eliminado
+GET {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{token}}
+
+### Flujo rapido - Health check
+GET {{baseUrl}}/health
+
+### Flujo rapido - Registrar usuario demo
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "login": "demo",
+  "email": "demo@example.com",
+  "password": "super-secret-123"
+}
+
+### Flujo rapido - Login demo
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "login": "demo",
+  "password": "super-secret-123"
+}
+
+### Flujo rapido - Crear proyecto demo
+POST {{baseUrl}}/projects
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Demo Project",
+  "description": "Project created from requests.http"
+}
+
+### Flujo rapido - Listar proyectos demo
+GET {{baseUrl}}/projects
+Authorization: Bearer {{token}}
+
+### Flujo rapido - Actualizar proyecto demo
+PATCH {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Demo Project Updated"
+}
+
+### Flujo rapido - Eliminar proyecto demo
+DELETE {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{token}}
