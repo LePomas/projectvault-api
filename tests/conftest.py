@@ -12,7 +12,9 @@ os.environ.setdefault("DATABASE_URL", "sqlite://")
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
-from app.models import User
+from app.models import Project, ProjectMember, User
+
+TEST_TABLES = [User.__table__, Project.__table__, ProjectMember.__table__]
 
 
 @pytest.fixture
@@ -22,9 +24,9 @@ def db_engine() -> Generator[Engine, None, None]:
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    Base.metadata.create_all(bind=engine, tables=[User.__table__])
+    Base.metadata.create_all(bind=engine, tables=TEST_TABLES)
     yield engine
-    Base.metadata.drop_all(bind=engine, tables=[User.__table__])
+    Base.metadata.drop_all(bind=engine, tables=list(reversed(TEST_TABLES)))
 
 
 @pytest.fixture
