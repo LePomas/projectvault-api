@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -24,3 +25,17 @@ class ProjectRead(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ProjectInviteCreate(BaseModel):
+    login: str = Field(min_length=1, max_length=50)
+    role: Literal["participant"]
+
+
+class ProjectMemberRead(BaseModel):
+    id: int
+    project_id: int
+    user_id: int
+    login: str
+    role: str
+    created_at: datetime

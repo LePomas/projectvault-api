@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.project import Project, ProjectMember
+from app.models.user import User
 
 
 class ProjectRepository:
@@ -52,6 +53,19 @@ class ProjectRepository:
             ProjectMember.user_id == user_id,
         )
         return self.db.scalar(statement)
+
+    def list_members(self, project_id: int) -> list[tuple[ProjectMember, User]]:
+        statement = (
+            select(ProjectMember, User)
+            .join(User, User.id == ProjectMember.user_id)
+            .where(ProjectMember.project_id == project_id)
+            .order_by(ProjectMember.created_at.asc(), ProjectMember.id.asc())
+        )
+        return list(self.db.execute(statement).all())
+
+    def delete_member(self, member: ProjectMember) -> None:
+        self.db.delete(member)
+        self.db.flush()
 
     def update(self, project: Project, fields: dict[str, str | None]) -> Project:
         for field, value in fields.items():

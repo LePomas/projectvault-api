@@ -55,6 +55,8 @@ Use plural nouns:
 ```text
 /projects
 /projects/{project_id}
+/projects/{project_id}/invites
+/projects/{project_id}/members
 /projects/{project_id}/documents
 /documents/{document_id}
 ```
