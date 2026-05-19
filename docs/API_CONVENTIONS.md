@@ -59,6 +59,7 @@ Use plural nouns:
 /projects/{project_id}/members
 /projects/{project_id}/documents
 /documents/{document_id}
+/invites/accept
 ```
 
 Prefer `PATCH` for partial updates.

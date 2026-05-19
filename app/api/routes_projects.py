@@ -10,6 +10,7 @@ from app.models.user import User
 from app.schemas.project import (
     ProjectCreate,
     ProjectInviteCreate,
+    ProjectInviteRead,
     ProjectMemberRead,
     ProjectRead,
     ProjectUpdate,
@@ -47,7 +48,7 @@ async def get_project(
 
 @router.post(
     "/{project_id}/invites",
-    response_model=ProjectMemberRead,
+    response_model=ProjectInviteRead,
     status_code=status.HTTP_201_CREATED,
 )
 async def invite_project_member(
@@ -55,7 +56,7 @@ async def invite_project_member(
     payload: ProjectInviteCreate,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-) -> ProjectMemberRead:
+) -> ProjectInviteRead:
     return ProjectService(db).invite_member(project_id, payload, current_user)
 
 

@@ -32,6 +32,20 @@ class ProjectInviteCreate(BaseModel):
     role: Literal["participant"]
 
 
+class ProjectInviteRead(BaseModel):
+    id: int
+    project_id: int
+    invited_login: str
+    role: str
+    token: str
+    expires_at: datetime
+    created_at: datetime
+
+
+class ProjectInviteAccept(BaseModel):
+    token: str = Field(min_length=1)
+
+
 class ProjectMemberRead(BaseModel):
     id: int
     project_id: int

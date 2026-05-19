@@ -2,6 +2,7 @@
 @token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzc4Njk1NTU2LCJpYXQiOjE3Nzg2OTE5NTZ9.nLvNFSOjv6BYHVa76nN8BY8oVbRU1-7kmBseG9PeBCA
 @projectId = 2
 @bobToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiZXhwIjoxNzc4Njk1MjkyLCJpYXQiOjE3Nzg2OTE2OTJ9.E6CvGK7K1sIb90op2OQIrBJhbITTRwmECXXUHnQHpT0
+@inviteToken = paste-invite-token-here
 
 ### Fase 0 - Health check
 GET {{baseUrl}}/health
@@ -134,6 +135,33 @@ Authorization: Bearer {{bobToken}}
 ### Fase 2 - Bob no lista proyectos de Ana
 GET {{baseUrl}}/projects
 Authorization: Bearer {{bobToken}}
+
+### Fase 3 - Invitar Bob como participant
+POST {{baseUrl}}/projects/{{projectId}}/invites
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "login": "bob",
+  "role": "participant"
+}
+
+### Fase 3 - Aceptar invitacion como Bob
+POST {{baseUrl}}/invites/accept
+Authorization: Bearer {{bobToken}}
+Content-Type: application/json
+
+{
+  "token": "{{inviteToken}}"
+}
+
+### Fase 3 - Listar miembros
+GET {{baseUrl}}/projects/{{projectId}}/members
+Authorization: Bearer {{token}}
+
+### Fase 3 - Quitar participant Bob
+DELETE {{baseUrl}}/projects/{{projectId}}/members/5
+Authorization: Bearer {{token}}
 
 ### Fase 2 - Eliminar proyecto como owner
 DELETE {{baseUrl}}/projects/{{projectId}}

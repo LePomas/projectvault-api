@@ -50,6 +50,10 @@ class Project(Base):
         back_populates="project",
         cascade="all, delete-orphan",
     )
+    invites: Mapped[list["ProjectInvite"]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
 
     __table_args__ = (
         CheckConstraint("total_size_bytes >= 0", name="projects_total_size_check"),
@@ -87,5 +91,42 @@ class ProjectMember(Base):
         CheckConstraint(
             "role IN ('owner', 'participant')",
             name="project_members_role_check",
+        ),
+    )
+
+
+class ProjectInvite(Base):
+    __tablename__ = "project_invites"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    invited_login: Mapped[str | None] = mapped_column(String(50))
+    invited_email: Mapped[str | None] = mapped_column(String(255))
+    token_hash: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
+    role: Mapped[str] = mapped_column(String(20), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    project: Mapped[Project] = relationship(back_populates="invites")
+
+    __table_args__ = (
+        CheckConstraint(
+            "role IN ('owner', 'participant')",
+            name="project_invites_role_check",
+        ),
+        CheckConstraint(
+            "invited_login IS NOT NULL OR invited_email IS NOT NULL",
+            name="project_invites_target_check",
         ),
     )

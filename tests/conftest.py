@@ -12,9 +12,14 @@ os.environ.setdefault("DATABASE_URL", "sqlite://")
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
-from app.models import Project, ProjectMember, User
+from app.models import Project, ProjectInvite, ProjectMember, User
 
-TEST_TABLES = [User.__table__, Project.__table__, ProjectMember.__table__]
+TEST_TABLES = [
+    User.__table__,
+    Project.__table__,
+    ProjectMember.__table__,
+    ProjectInvite.__table__,
+]
 
 
 @pytest.fixture

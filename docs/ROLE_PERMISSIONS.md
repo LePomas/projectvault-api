@@ -9,11 +9,16 @@ Project access is represented by `project_members.role`.
 
 ## Phase 3 invite behavior
 
-`POST /projects/{project_id}/invites` adds an existing user directly as a
-`participant` member by `login`. It does not create pending invitations or
-acceptance tokens yet.
+`POST /projects/{project_id}/invites` creates a pending invite for an existing
+user by `login`. The response includes the raw invite token once; only a
+SHA-256 hash of the token is stored.
+
+`POST /invites/accept` accepts a pending invite. The caller must be
+authenticated as the invited login. Accepting the invite creates the
+`participant` membership.
 
 Only `participant` can be invited or removed in this phase.
+Pending invites expire after 7 days.
 
 ## Matrix
 
@@ -23,7 +28,8 @@ Only `participant` can be invited or removed in this phase.
 | Edit project | Yes | Yes | No |
 | Delete project | Yes | No | No |
 | List project members | Yes | Yes | No |
-| Invite participants | Yes | No | No |
+| Create participant invites | Yes | No | No |
+| Accept own participant invite | Yes | Yes | No |
 | Remove participants | Yes | No | No |
 | Remove owner membership | No | No | No |
 
