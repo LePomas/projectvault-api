@@ -268,6 +268,37 @@ async def test_invited_user_can_accept_invite_and_access_project(
     assert saved_invite.accepted_at is not None
 
 
+async def test_owner_can_invite_another_owner(client: AsyncClient) -> None:
+    owner_token = await register_and_login(client, "owner", "owner@example.com")
+    second_owner_token = await register_and_login(
+        client,
+        "second_owner",
+        "second-owner@example.com",
+    )
+    project = await create_project(client, owner_token)
+
+    response = await client.post(
+        f"/projects/{project['id']}/invites",
+        headers=bearer(owner_token),
+        json={"login": "second_owner", "role": "owner"},
+    )
+    assert response.status_code == 201
+    assert response.json()["role"] == "owner"
+
+    member = await accept_invite(
+        client,
+        second_owner_token,
+        response.json()["token"],
+    )
+    assert member["role"] == "owner"
+
+    delete_response = await client.delete(
+        f"/projects/{project['id']}",
+        headers=bearer(second_owner_token),
+    )
+    assert delete_response.status_code == 204
+
+
 async def test_uninvited_user_cannot_accept_invite(client: AsyncClient) -> None:
     owner_token = await register_and_login(client, "owner", "owner@example.com")
     await register_and_login(client, "participant", "participant@example.com")
@@ -583,7 +614,7 @@ async def test_project_member_endpoints_require_authentication(
     assert accept_response.json()["error"]["code"] == "MISSING_TOKEN"
 
 
-async def test_invite_accepts_only_participant_role(client: AsyncClient) -> None:
+async def test_invite_rejects_unsupported_role(client: AsyncClient) -> None:
     owner_token = await register_and_login(client, "owner", "owner@example.com")
     await register_and_login(client, "other", "other@example.com")
     project = await create_project(client, owner_token)
@@ -591,7 +622,7 @@ async def test_invite_accepts_only_participant_role(client: AsyncClient) -> None
     response = await client.post(
         f"/projects/{project['id']}/invites",
         headers=bearer(owner_token),
-        json={"login": "other", "role": "owner"},
+        json={"login": "other", "role": "admin"},
     )
 
     assert response.status_code == 422

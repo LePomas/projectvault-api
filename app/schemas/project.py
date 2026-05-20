@@ -29,7 +29,7 @@ class ProjectRead(BaseModel):
 
 class ProjectInviteCreate(BaseModel):
     login: str = Field(min_length=1, max_length=50)
-    role: Literal["participant"]
+    role: Literal["owner", "participant"]
 
 
 class ProjectInviteRead(BaseModel):
