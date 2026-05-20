@@ -11,6 +11,7 @@
 @carlaUserId = 3
 @inviteToken = paste-participant-invite-token-here
 @ownerInviteToken = paste-owner-invite-token-here
+@documentId = 1
 
 
 ### Health - Estado del servicio
@@ -337,6 +338,115 @@ Authorization: Bearer {{bobToken}}
 
 ### Project members - Quitar miembro sin token
 DELETE {{baseUrl}}/projects/{{projectId}}/members/{{bobUserId}}
+
+
+### Documents - Subir PDF como Ana
+POST {{baseUrl}}/projects/{{projectId}}/documents
+Authorization: Bearer {{anaToken}}
+Content-Type: multipart/form-data; boundary=ProjectVaultBoundary
+
+--ProjectVaultBoundary
+Content-Disposition: form-data; name="file"; filename="contract.pdf"
+Content-Type: application/pdf
+
+%PDF-1.7
+ProjectVault test PDF content
+--ProjectVaultBoundary--
+
+### Documents - Subir DOCX como Ana
+POST {{baseUrl}}/projects/{{projectId}}/documents
+Authorization: Bearer {{anaToken}}
+Content-Type: multipart/form-data; boundary=ProjectVaultBoundary
+
+--ProjectVaultBoundary
+Content-Disposition: form-data; name="file"; filename="brief.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+ProjectVault test DOCX content
+--ProjectVaultBoundary--
+
+### Documents - Subir TXT debe devolver 415
+POST {{baseUrl}}/projects/{{projectId}}/documents
+Authorization: Bearer {{anaToken}}
+Content-Type: multipart/form-data; boundary=ProjectVaultBoundary
+
+--ProjectVaultBoundary
+Content-Disposition: form-data; name="file"; filename="notes.txt"
+Content-Type: text/plain
+
+Plain text is not supported
+--ProjectVaultBoundary--
+
+### Documents - Subir PDF con content_type incorrecto debe devolver 415
+POST {{baseUrl}}/projects/{{projectId}}/documents
+Authorization: Bearer {{anaToken}}
+Content-Type: multipart/form-data; boundary=ProjectVaultBoundary
+
+--ProjectVaultBoundary
+Content-Disposition: form-data; name="file"; filename="wrong-content-type.pdf"
+Content-Type: text/plain
+
+This filename is PDF but content type is text/plain
+--ProjectVaultBoundary--
+
+### Documents - Listar documentos como Ana
+GET {{baseUrl}}/projects/{{projectId}}/documents
+Authorization: Bearer {{anaToken}}
+
+### Documents - Listar documentos sin token
+GET {{baseUrl}}/projects/{{projectId}}/documents
+
+### Documents - Listar documentos como Bob antes de aceptar invitacion debe devolver 404
+GET {{baseUrl}}/projects/{{projectId}}/documents
+Authorization: Bearer {{bobToken}}
+
+### Documents - Consultar metadata como Ana
+GET {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{anaToken}}
+
+### Documents - Consultar metadata sin token
+GET {{baseUrl}}/documents/{{documentId}}
+
+### Documents - Consultar metadata como Bob antes de aceptar invitacion debe devolver 404
+GET {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{bobToken}}
+
+### Documents - Renombrar documento como Ana
+PUT {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{anaToken}}
+Content-Type: application/json
+
+{
+  "filename": "contract-renamed.pdf"
+}
+
+### Documents - Renombrar documento sin token
+PUT {{baseUrl}}/documents/{{documentId}}
+Content-Type: application/json
+
+{
+  "filename": "unauthorized.pdf"
+}
+
+### Documents - Renombrar documento como Bob antes de aceptar invitacion debe devolver 404
+PUT {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{bobToken}}
+Content-Type: application/json
+
+{
+  "filename": "hidden.pdf"
+}
+
+### Documents - Eliminar documento como Ana
+DELETE {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{anaToken}}
+
+### Documents - Verificar documento eliminado debe devolver 404
+GET {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{anaToken}}
+
+### Documents - Eliminar documento sin token
+DELETE {{baseUrl}}/documents/{{documentId}}
 
 
 ### Projects - Eliminar proyecto como Bob debe devolver 404

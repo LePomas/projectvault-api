@@ -239,6 +239,15 @@ DELETE /documents/{document_id}
 - Tabla `documents`.
 - Servicio de storage abstracto.
 
+### Estado y pendientes
+
+- Implementado: upload/list/read metadata/update/delete con storage local.
+- Implementado: validacion `.pdf`/`.docx`, `content_type`, permisos y tests.
+- Implementado: ejemplos Phase 4 en `requests.http`.
+- Pendiente: decidir si "download" sera streaming directo o URL presignada.
+- Pendiente: endpoint de descarga de bytes si se decide hacerlo en Fase 4.
+- Pendiente: interfaz formal de storage/presigned methods para handoff S3.
+
 ## Fase 5 - S3 + Lambda + limites de almacenamiento
 
 Fechas: **Jun 8-Jun 12**
