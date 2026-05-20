@@ -9,22 +9,20 @@ set -euo pipefail
 #
 # Usage:
 #   ./scripts/reset-db.sh
-#   ./scripts/reset-db.sh --yes
 #   ./scripts/reset-db.sh --yes --with-api
 
-AUTO_CONFIRM="false"
-WITH_API="false"
+AUTO_CONFIRM="true"
+WITH_API="true"
 
 usage() {
   cat <<'EOF'
 Usage:
   ./scripts/reset-db.sh
-  ./scripts/reset-db.sh --yes
   ./scripts/reset-db.sh --yes --with-api
 
 Options:
-  --yes, -y    Skip confirmation prompt.
-  --with-api   Start the API service after recreating the database.
+  --yes, -y    Skip confirmation prompt. This is the default.
+  --with-api   Start the API service after recreating the database. This is the default.
   --help, -h   Show this help message.
 EOF
 }
