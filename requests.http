@@ -1,16 +1,30 @@
 @baseUrl = http://localhost:8000
 
+# Optional sample data:
+#   ./scripts/seed-sample-data.sh
+#
+# Seeded demo users:
+#   ana / super-secret-123
+#   bob / super-secret-123
+#   carla / super-secret-123
+#   diego / super-secret-123
+#
+# The seed script prints current project/document IDs and pending invite tokens.
+
 # Paste access_token values from the login responses below.
 @anaToken = paste-ana-access-token-here
 @bobToken = paste-bob-access-token-here
 @carlaToken = paste-carla-access-token-here
+@diegoToken = paste-diego-access-token-here
 
 # Paste IDs and invite token from API responses as you create them.
 @projectId = 1
 @bobUserId = 2
 @carlaUserId = 3
+@diegoUserId = 4
 @inviteToken = paste-participant-invite-token-here
 @ownerInviteToken = paste-owner-invite-token-here
+@seedDiegoInviteToken = sample-gamma-diego-pending-token
 @documentId = 1
 
 
@@ -101,6 +115,15 @@ Content-Type: application/json
 
 {
   "login": "carla",
+  "password": "super-secret-123"
+}
+
+### Auth - Login Diego
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "login": "diego",
   "password": "super-secret-123"
 }
 
@@ -276,6 +299,15 @@ Content-Type: application/json
 
 {
   "token": "{{ownerInviteToken}}"
+}
+
+### Invites - Aceptar invitacion sembrada como Diego
+POST {{baseUrl}}/invites/accept
+Authorization: Bearer {{diegoToken}}
+Content-Type: application/json
+
+{
+  "token": "{{seedDiegoInviteToken}}"
 }
 
 ### Invites - Aceptar invitacion como Ana debe ocultar invitacion
