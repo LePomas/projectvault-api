@@ -120,6 +120,19 @@ class ProjectRepository:
         self.db.flush()
         return project
 
+    def adjust_document_totals(
+        self,
+        project: Project,
+        *,
+        count_delta: int,
+        size_delta: int,
+    ) -> Project:
+        project.documents_count += count_delta
+        project.total_size_bytes += size_delta
+        project.updated_at = datetime.now(UTC)
+        self.db.flush()
+        return project
+
     def soft_delete(self, project: Project) -> Project:
         now = datetime.now(UTC)
         project.deleted_at = now

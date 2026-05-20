@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     BigInteger,
@@ -14,6 +15,9 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.models.document import Document
 
 
 class Project(Base):
@@ -51,6 +55,10 @@ class Project(Base):
         cascade="all, delete-orphan",
     )
     invites: Mapped[list["ProjectInvite"]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
+    documents: Mapped[list["Document"]] = relationship(
         back_populates="project",
         cascade="all, delete-orphan",
     )

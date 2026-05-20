@@ -65,3 +65,28 @@ Use plural nouns:
 Prefer `PATCH` for partial updates.
 
 Avoid using `GET` for actions that create or modify state.
+
+## Document uploads
+
+Phase 4 local uploads use multipart form data:
+
+```http
+POST /projects/{project_id}/documents
+Content-Type: multipart/form-data
+```
+
+Field:
+
+```text
+file
+```
+
+Supported file types:
+
+```text
+.pdf  application/pdf
+.docx application/vnd.openxmlformats-officedocument.wordprocessingml.document
+```
+
+`GET /documents/{document_id}` returns JSON metadata. File-byte downloads are a
+separate concern from metadata reads.

@@ -59,6 +59,9 @@ Open:
 http://localhost:8000/docs
 ```
 
+Uploaded documents are stored locally under `DOCUMENT_STORAGE_PATH`, which
+defaults to `storage/documents` for local development.
+
 ## Project structure
 
 ```text

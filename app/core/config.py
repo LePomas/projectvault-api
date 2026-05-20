@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "change-this-local-secret-with-32-bytes-minimum"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
+    document_storage_path: str = "storage/documents"
 
     model_config = SettingsConfigDict(
         env_file=".env",
