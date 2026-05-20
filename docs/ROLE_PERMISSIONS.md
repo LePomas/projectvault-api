@@ -15,10 +15,15 @@ SHA-256 hash of the token is stored.
 
 `POST /invites/accept` accepts a pending invite. The caller must be
 authenticated as the invited login. Accepting the invite creates the
-`participant` membership.
+membership with the invited role.
 
-Only `participant` can be invited or removed in this phase.
+Owners can invite existing users as `owner` or `participant`.
 Pending invites expire after 7 days.
+
+Owner invites are a privileged operation. They grant the same project-level
+administrative permissions as the creator, including inviting members and
+deleting the project. The project must always keep at least one owner; owner
+removal is not exposed in this phase.
 
 ## Matrix
 
@@ -28,8 +33,9 @@ Pending invites expire after 7 days.
 | Edit project | Yes | Yes | No |
 | Delete project | Yes | No | No |
 | List project members | Yes | Yes | No |
+| Create owner invites | Yes | No | No |
 | Create participant invites | Yes | No | No |
-| Accept own participant invite | Yes | Yes | No |
+| Accept own invite | Yes | Yes | No |
 | Remove participants | Yes | No | No |
 | Remove owner membership | No | No | No |
 

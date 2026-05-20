@@ -139,7 +139,9 @@ GET  /documents/{document_id}/download-url
 ### Invitaciones
 
 - Solo owner puede invitar usuarios.
-- La invitacion por login asigna rol `participant`.
+- La invitacion por login asigna rol `owner` o `participant`.
+- Invitar `owner` concede permisos administrativos completos sobre el proyecto.
+- Un proyecto debe conservar al menos un owner.
 - Participant no puede invitar a otros usuarios.
 - Participant no puede eliminar el proyecto.
 
@@ -154,7 +156,8 @@ GET  /documents/{document_id}/download-url
 | Subir documentos | Si | Si | No |
 | Actualizar documentos | Si | Si | No |
 | Eliminar documentos | Si | Si | No |
-| Invitar usuarios | Si | No | No |
+| Invitar owners | Si | No | No |
+| Invitar participants | Si | No | No |
 | Quitar usuarios | Si | No | No |
 
 ## Modelo de base de datos recomendado
@@ -263,7 +266,7 @@ project_id
 email
 login
 token_hash
-role
+role: owner | participant
 expires_at
 accepted_at
 created_at
@@ -297,4 +300,3 @@ Estos campos pueden actualizarse cuando:
 - se elimina un documento
 - Lambda procesa un evento de S3
 - se recalcula manualmente con un job de mantenimiento
-

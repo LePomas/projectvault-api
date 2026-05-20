@@ -181,13 +181,24 @@ DELETE /projects/{project_id}/members/{user_id}
 }
 ```
 
+Tambien se puede invitar a otro owner:
+
+```json
+{
+  "login": "usuario_owner",
+  "role": "owner"
+}
+```
+
 ### Reglas
 
 - Solo owner puede invitar.
+- Owner puede invitar usuarios como `owner` o `participant`.
 - Solo owner puede quitar miembros.
 - Participant puede modificar proyecto y documentos.
 - Participant no puede borrar proyecto.
 - Owner no puede eliminarse a si mismo si es el unico owner.
+- El proyecto debe conservar al menos un owner.
 
 ### Entregables
 
@@ -539,4 +550,3 @@ O como:
 ```text
 PROJECT_PLAN.md
 ```
-

@@ -1,16 +1,32 @@
 @baseUrl = http://localhost:8000
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzc4Njk1NTU2LCJpYXQiOjE3Nzg2OTE5NTZ9.nLvNFSOjv6BYHVa76nN8BY8oVbRU1-7kmBseG9PeBCA
-@projectId = 2
-@bobToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiZXhwIjoxNzc4Njk1MjkyLCJpYXQiOjE3Nzg2OTE2OTJ9.E6CvGK7K1sIb90op2OQIrBJhbITTRwmECXXUHnQHpT0
-@inviteToken = paste-invite-token-here
 
-### Fase 0 - Health check
+# Paste access_token values from the login responses below.
+@anaToken = paste-ana-access-token-here
+@bobToken = paste-bob-access-token-here
+@carlaToken = paste-carla-access-token-here
+
+# Paste IDs and invite token from API responses as you create them.
+@projectId = 1
+@bobUserId = 2
+@carlaUserId = 3
+@inviteToken = paste-participant-invite-token-here
+@ownerInviteToken = paste-owner-invite-token-here
+
+
+### Health - Estado del servicio
 GET {{baseUrl}}/health
 
-### Fase 0 - OpenAPI JSON
+### Metadata - OpenAPI JSON
 GET {{baseUrl}}/openapi.json
 
-### Fase 1 - Registrar usuario Ana
+### Metadata - Swagger UI
+GET {{baseUrl}}/docs
+
+### Metadata - ReDoc
+GET {{baseUrl}}/redoc
+
+
+### Auth - Registrar Ana
 POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
@@ -20,96 +36,7 @@ Content-Type: application/json
   "password": "super-secret-123"
 }
 
-### Fase 1 - Registrar login duplicado
-POST {{baseUrl}}/auth/register
-Content-Type: application/json
-
-{
-  "login": "ana",
-  "email": "ana.duplicate@example.com",
-  "password": "super-secret-123"
-}
-
-### Fase 1 - Registrar email duplicado
-POST {{baseUrl}}/auth/register
-Content-Type: application/json
-
-{
-  "login": "ana_duplicate",
-  "email": "ana@example.com",
-  "password": "super-secret-123"
-}
-
-### Fase 1 - Login Ana
-POST {{baseUrl}}/auth/login
-Content-Type: application/json
-
-{
-  "login": "ana",
-  "password": "super-secret-123"
-}
-
-### Fase 1 - Usuario autenticado
-GET {{baseUrl}}/auth/me
-Authorization: Bearer {{token}}
-
-### Fase 1 - Usuario autenticado sin token
-GET {{baseUrl}}/auth/me
-
-### Fase 1 - Usuario autenticado con token invalido
-GET {{baseUrl}}/auth/me
-Authorization: Bearer invalid-token
-
-### Fase 1 - Login con credenciales invalidas
-POST {{baseUrl}}/auth/login
-Content-Type: application/json
-
-{
-  "login": "ana",
-  "password": "wrong-password"
-}
-
-### Fase 2 - Crear proyecto
-POST {{baseUrl}}/projects
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "name": "Project Alpha",
-  "description": "Initial description"
-}
-
-### Fase 2 - Listar proyectos accesibles
-GET {{baseUrl}}/projects
-Authorization: Bearer {{token}}
-
-### Fase 2 - Consultar detalle de proyecto
-GET {{baseUrl}}/projects/{{projectId}}
-Authorization: Bearer {{token}}
-
-### Fase 2 - Actualizar proyecto
-PATCH {{baseUrl}}/projects/{{projectId}}
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "name": "Project Alpha Updated",
-  "description": "Updated description"
-}
-
-### Fase 2 - Actualizar solo descripcion
-PATCH {{baseUrl}}/projects/{{projectId}}
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "description": null
-}
-
-### Fase 2 - Proyectos sin token
-GET {{baseUrl}}/projects
-
-### Fase 2 - Registrar usuario Bob
+### Auth - Registrar Bob
 POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
@@ -119,7 +46,46 @@ Content-Type: application/json
   "password": "super-secret-123"
 }
 
-### Fase 2 - Login Bob
+### Auth - Registrar Carla
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "login": "carla",
+  "email": "carla@example.com",
+  "password": "super-secret-123"
+}
+
+### Auth - Registrar login duplicado
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "login": "ana",
+  "email": "ana.duplicate@example.com",
+  "password": "super-secret-123"
+}
+
+### Auth - Registrar email duplicado
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "login": "ana_duplicate",
+  "email": "ana@example.com",
+  "password": "super-secret-123"
+}
+
+### Auth - Login Ana
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "login": "ana",
+  "password": "super-secret-123"
+}
+
+### Auth - Login Bob
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
@@ -128,17 +94,124 @@ Content-Type: application/json
   "password": "super-secret-123"
 }
 
-### Fase 2 - Bob no puede ver proyecto de Ana
-GET {{baseUrl}}/projects/{{projectId}}
-Authorization: Bearer {{bobToken}}
+### Auth - Login Carla
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
 
-### Fase 2 - Bob no lista proyectos de Ana
+{
+  "login": "carla",
+  "password": "super-secret-123"
+}
+
+### Auth - Login con credenciales invalidas
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "login": "ana",
+  "password": "wrong-password"
+}
+
+### Auth - Usuario autenticado Ana
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{anaToken}}
+
+### Auth - Usuario autenticado sin token
+GET {{baseUrl}}/auth/me
+
+### Auth - Usuario autenticado con token invalido
+GET {{baseUrl}}/auth/me
+Authorization: Bearer invalid-token
+
+
+### Projects - Crear proyecto como Ana
+POST {{baseUrl}}/projects
+Authorization: Bearer {{anaToken}}
+Content-Type: application/json
+
+{
+  "name": "Project Alpha",
+  "description": "Initial description"
+}
+
+### Projects - Crear proyecto sin descripcion
+POST {{baseUrl}}/projects
+Authorization: Bearer {{anaToken}}
+Content-Type: application/json
+
+{
+  "name": "Project Without Description"
+}
+
+### Projects - Crear proyecto sin token
+POST {{baseUrl}}/projects
+Content-Type: application/json
+
+{
+  "name": "Unauthorized Project",
+  "description": "This request should fail without a bearer token"
+}
+
+### Projects - Listar proyectos accesibles como Ana
+GET {{baseUrl}}/projects
+Authorization: Bearer {{anaToken}}
+
+### Projects - Listar proyectos accesibles como Bob
 GET {{baseUrl}}/projects
 Authorization: Bearer {{bobToken}}
 
-### Fase 3 - Invitar Bob como participant
+### Projects - Listar proyectos sin token
+GET {{baseUrl}}/projects
+
+### Projects - Consultar detalle como Ana
+GET {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{anaToken}}
+
+### Projects - Consultar detalle como Bob antes de aceptar invitacion
+GET {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{bobToken}}
+
+### Projects - Consultar detalle sin token
+GET {{baseUrl}}/projects/{{projectId}}
+
+### Projects - Actualizar nombre y descripcion
+PATCH {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{anaToken}}
+Content-Type: application/json
+
+{
+  "name": "Project Alpha Updated",
+  "description": "Updated description"
+}
+
+### Projects - Actualizar solo descripcion a null
+PATCH {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{anaToken}}
+Content-Type: application/json
+
+{
+  "description": null
+}
+
+### Projects - Actualizar con cuerpo vacio
+PATCH {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{anaToken}}
+Content-Type: application/json
+
+{}
+
+### Projects - Actualizar sin token
+PATCH {{baseUrl}}/projects/{{projectId}}
+Content-Type: application/json
+
+{
+  "name": "Unauthorized Update"
+}
+
+
+### Project invites - Invitar Bob como participant
 POST {{baseUrl}}/projects/{{projectId}}/invites
-Authorization: Bearer {{token}}
+Authorization: Bearer {{anaToken}}
 Content-Type: application/json
 
 {
@@ -146,7 +219,47 @@ Content-Type: application/json
   "role": "participant"
 }
 
-### Fase 3 - Aceptar invitacion como Bob
+### Project invites - Invitar Carla como owner
+POST {{baseUrl}}/projects/{{projectId}}/invites
+Authorization: Bearer {{anaToken}}
+Content-Type: application/json
+
+{
+  "login": "carla",
+  "role": "owner"
+}
+
+### Project invites - Invitar usuario inexistente
+POST {{baseUrl}}/projects/{{projectId}}/invites
+Authorization: Bearer {{anaToken}}
+Content-Type: application/json
+
+{
+  "login": "missing-user",
+  "role": "participant"
+}
+
+### Project invites - Invitar con rol invalido
+POST {{baseUrl}}/projects/{{projectId}}/invites
+Authorization: Bearer {{anaToken}}
+Content-Type: application/json
+
+{
+  "login": "bob",
+  "role": "admin"
+}
+
+### Project invites - Invitar sin token
+POST {{baseUrl}}/projects/{{projectId}}/invites
+Content-Type: application/json
+
+{
+  "login": "bob",
+  "role": "participant"
+}
+
+
+### Invites - Aceptar invitacion como Bob
 POST {{baseUrl}}/invites/accept
 Authorization: Bearer {{bobToken}}
 Content-Type: application/json
@@ -155,67 +268,92 @@ Content-Type: application/json
   "token": "{{inviteToken}}"
 }
 
-### Fase 3 - Listar miembros
+### Invites - Aceptar invitacion owner como Carla
+POST {{baseUrl}}/invites/accept
+Authorization: Bearer {{carlaToken}}
+Content-Type: application/json
+
+{
+  "token": "{{ownerInviteToken}}"
+}
+
+### Invites - Aceptar invitacion como Ana debe ocultar invitacion
+POST {{baseUrl}}/invites/accept
+Authorization: Bearer {{anaToken}}
+Content-Type: application/json
+
+{
+  "token": "{{inviteToken}}"
+}
+
+### Invites - Aceptar invitacion con token invalido
+POST {{baseUrl}}/invites/accept
+Authorization: Bearer {{bobToken}}
+Content-Type: application/json
+
+{
+  "token": "invalid-invite-token"
+}
+
+### Invites - Aceptar invitacion sin bearer token
+POST {{baseUrl}}/invites/accept
+Content-Type: application/json
+
+{
+  "token": "{{inviteToken}}"
+}
+
+
+### Project members - Listar miembros como Ana
 GET {{baseUrl}}/projects/{{projectId}}/members
-Authorization: Bearer {{token}}
+Authorization: Bearer {{anaToken}}
 
-### Fase 3 - Quitar participant Bob
-DELETE {{baseUrl}}/projects/{{projectId}}/members/5
-Authorization: Bearer {{token}}
+### Project members - Listar miembros como Bob despues de aceptar invitacion
+GET {{baseUrl}}/projects/{{projectId}}/members
+Authorization: Bearer {{bobToken}}
 
-### Fase 2 - Eliminar proyecto como owner
+### Project members - Listar miembros como Carla owner despues de aceptar invitacion
+GET {{baseUrl}}/projects/{{projectId}}/members
+Authorization: Bearer {{carlaToken}}
+
+### Project members - Listar miembros sin token
+GET {{baseUrl}}/projects/{{projectId}}/members
+
+### Project members - Quitar participant Bob como Ana
+DELETE {{baseUrl}}/projects/{{projectId}}/members/{{bobUserId}}
+Authorization: Bearer {{anaToken}}
+
+### Project members - Quitar owner Ana debe devolver 404
+DELETE {{baseUrl}}/projects/{{projectId}}/members/1
+Authorization: Bearer {{anaToken}}
+
+### Project members - Quitar owner Carla debe devolver 404
+DELETE {{baseUrl}}/projects/{{projectId}}/members/{{carlaUserId}}
+Authorization: Bearer {{anaToken}}
+
+### Project members - Quitar miembro como Bob debe devolver 404
+DELETE {{baseUrl}}/projects/{{projectId}}/members/{{bobUserId}}
+Authorization: Bearer {{bobToken}}
+
+### Project members - Quitar miembro sin token
+DELETE {{baseUrl}}/projects/{{projectId}}/members/{{bobUserId}}
+
+
+### Projects - Eliminar proyecto como Bob debe devolver 404
 DELETE {{baseUrl}}/projects/{{projectId}}
-Authorization: Bearer {{token}}
+Authorization: Bearer {{bobToken}}
 
-### Fase 2 - Verificar proyecto eliminado
+### Projects - Eliminar proyecto como owner Ana
+DELETE {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{anaToken}}
+
+### Projects - Eliminar proyecto como owner Carla
+DELETE {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{carlaToken}}
+
+### Projects - Eliminar proyecto sin token
+DELETE {{baseUrl}}/projects/{{projectId}}
+
+### Projects - Verificar proyecto eliminado
 GET {{baseUrl}}/projects/{{projectId}}
-Authorization: Bearer {{token}}
-
-### Flujo rapido - Health check
-GET {{baseUrl}}/health
-
-### Flujo rapido - Registrar usuario demo
-POST {{baseUrl}}/auth/register
-Content-Type: application/json
-
-{
-  "login": "demo",
-  "email": "demo@example.com",
-  "password": "super-secret-123"
-}
-
-### Flujo rapido - Login demo
-POST {{baseUrl}}/auth/login
-Content-Type: application/json
-
-{
-  "login": "demo",
-  "password": "super-secret-123"
-}
-
-### Flujo rapido - Crear proyecto demo
-POST {{baseUrl}}/projects
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "name": "Demo Project",
-  "description": "Project created from requests.http"
-}
-
-### Flujo rapido - Listar proyectos demo
-GET {{baseUrl}}/projects
-Authorization: Bearer {{token}}
-
-### Flujo rapido - Actualizar proyecto demo
-PATCH {{baseUrl}}/projects/{{projectId}}
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "name": "Demo Project Updated"
-}
-
-### Flujo rapido - Eliminar proyecto demo
-DELETE {{baseUrl}}/projects/{{projectId}}
-Authorization: Bearer {{token}}
+Authorization: Bearer {{anaToken}}
