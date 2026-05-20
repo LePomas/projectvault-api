@@ -131,6 +131,10 @@ async def test_owner_can_upload_list_read_rename_and_delete_document(
         f"/documents/{document['id']}",
         headers=bearer(token),
     )
+    download_response = await client.get(
+        f"/documents/{document['id']}/download",
+        headers=bearer(token),
+    )
     update_response = await client.put(
         f"/documents/{document['id']}",
         headers=bearer(token),
@@ -144,16 +148,28 @@ async def test_owner_can_upload_list_read_rename_and_delete_document(
         f"/documents/{document['id']}",
         headers=bearer(token),
     )
+    deleted_download_response = await client.get(
+        f"/documents/{document['id']}/download",
+        headers=bearer(token),
+    )
 
     assert list_response.status_code == 200
     assert [item["id"] for item in list_response.json()] == [document["id"]]
     assert read_response.status_code == 200
     assert read_response.json()["id"] == document["id"]
+    assert download_response.status_code == 200
+    assert download_response.content == b"%PDF-1.7\nbody"
+    assert download_response.headers["content-type"] == "application/pdf"
+    assert download_response.headers["content-disposition"] == (
+        'attachment; filename="contract.pdf"'
+    )
     assert update_response.status_code == 200
     assert update_response.json()["filename"] == "renamed.pdf"
     assert delete_response.status_code == 204
     assert deleted_read_response.status_code == 404
     assert deleted_read_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
+    assert deleted_download_response.status_code == 404
+    assert deleted_download_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
     assert not stored_file(document_storage_path, document["storage_key"]).exists()
 
     db_session.expire_all()
@@ -200,6 +216,10 @@ async def test_participant_can_manage_project_documents(
         headers=bearer(participant_token),
         json={"filename": "participant-renamed.pdf"},
     )
+    download_response = await client.get(
+        f"/documents/{document['id']}/download",
+        headers=bearer(participant_token),
+    )
     delete_response = await client.delete(
         f"/documents/{document['id']}",
         headers=bearer(participant_token),
@@ -209,6 +229,8 @@ async def test_participant_can_manage_project_documents(
     assert list_response.json()[0]["uploaded_by_id"] == 2
     assert update_response.status_code == 200
     assert update_response.json()["filename"] == "participant-renamed.pdf"
+    assert download_response.status_code == 200
+    assert download_response.content == b"%PDF-1.7\nbody"
     assert delete_response.status_code == 204
 
 
@@ -232,6 +254,24 @@ async def test_upload_accepts_docx(client: AsyncClient) -> None:
     assert response.json()["filename"] == "brief.docx"
 
 
+async def test_download_missing_storage_file_returns_storage_error(
+    client: AsyncClient,
+    document_storage_path: Path,
+) -> None:
+    token = await register_and_login(client, "owner", "owner@example.com")
+    project = await create_project(client, token)
+    document = await upload_pdf(client, token, project["id"])
+    stored_file(document_storage_path, document["storage_key"]).unlink()
+
+    response = await client.get(
+        f"/documents/{document['id']}/download",
+        headers=bearer(token),
+    )
+
+    assert response.status_code == 500
+    assert response.json()["error"]["code"] == "DOCUMENT_STORAGE_ERROR"
+
+
 async def test_document_endpoints_hide_inaccessible_documents(
     client: AsyncClient,
 ) -> None:
@@ -248,6 +288,10 @@ async def test_document_endpoints_hide_inaccessible_documents(
         f"/documents/{document['id']}",
         headers=bearer(outsider_token),
     )
+    download_response = await client.get(
+        f"/documents/{document['id']}/download",
+        headers=bearer(outsider_token),
+    )
     update_response = await client.put(
         f"/documents/{document['id']}",
         headers=bearer(outsider_token),
@@ -262,6 +306,8 @@ async def test_document_endpoints_hide_inaccessible_documents(
     assert list_response.json()["error"]["code"] == "PROJECT_NOT_FOUND"
     assert read_response.status_code == 404
     assert read_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
+    assert download_response.status_code == 404
+    assert download_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
     assert update_response.status_code == 404
     assert update_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
     assert delete_response.status_code == 404
@@ -302,6 +348,7 @@ async def test_document_endpoints_require_authentication(
     )
     list_response = await client.get("/projects/1/documents")
     read_response = await client.get("/documents/1")
+    download_response = await client.get("/documents/1/download")
     update_response = await client.put("/documents/1", json={"filename": "x.pdf"})
     delete_response = await client.delete("/documents/1")
 
@@ -311,6 +358,8 @@ async def test_document_endpoints_require_authentication(
     assert list_response.json()["error"]["code"] == "MISSING_TOKEN"
     assert read_response.status_code == 401
     assert read_response.json()["error"]["code"] == "MISSING_TOKEN"
+    assert download_response.status_code == 401
+    assert download_response.json()["error"]["code"] == "MISSING_TOKEN"
     assert update_response.status_code == 401
     assert update_response.json()["error"]["code"] == "MISSING_TOKEN"
     assert delete_response.status_code == 401

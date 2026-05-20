@@ -59,6 +59,7 @@ Use plural nouns:
 /projects/{project_id}/members
 /projects/{project_id}/documents
 /documents/{document_id}
+/documents/{document_id}/download
 /invites/accept
 ```
 
@@ -88,5 +89,14 @@ Supported file types:
 .docx application/vnd.openxmlformats-officedocument.wordprocessingml.document
 ```
 
-`GET /documents/{document_id}` returns JSON metadata. File-byte downloads are a
-separate concern from metadata reads.
+`GET /documents/{document_id}` returns JSON metadata.
+
+Phase 4 local downloads use direct backend file responses:
+
+```http
+GET /documents/{document_id}/download
+```
+
+The download endpoint returns file bytes, not JSON, after the same project-access
+checks as document metadata reads. Presigned download URLs are reserved for the
+S3 phase.

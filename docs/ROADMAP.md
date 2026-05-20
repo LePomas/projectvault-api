@@ -220,6 +220,7 @@ Completar la parte de documentos sin depender todavia de AWS.
 GET    /projects/{project_id}/documents
 POST   /projects/{project_id}/documents
 GET    /documents/{document_id}
+GET    /documents/{document_id}/download
 PUT    /documents/{document_id}
 DELETE /documents/{document_id}
 ```
@@ -242,10 +243,10 @@ DELETE /documents/{document_id}
 ### Estado y pendientes
 
 - Implementado: upload/list/read metadata/update/delete con storage local.
+- Implementado: descarga directa de bytes por backend con storage local.
 - Implementado: validacion `.pdf`/`.docx`, `content_type`, permisos y tests.
 - Implementado: ejemplos Phase 4 en `requests.http`.
-- Pendiente: decidir si "download" sera streaming directo o URL presignada.
-- Pendiente: endpoint de descarga de bytes si se decide hacerlo en Fase 4.
+- Pendiente: URL presignada de descarga para Fase 5/S3.
 - Pendiente: interfaz formal de storage/presigned methods para handoff S3.
 
 ## Fase 5 - S3 + Lambda + limites de almacenamiento

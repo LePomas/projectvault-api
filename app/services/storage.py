@@ -40,6 +40,16 @@ class LocalDocumentStorage:
                 message="Document could not be deleted from storage.",
             ) from exc
 
+    def download_path(self, storage_key: str) -> Path:
+        path = self._path_for_key(storage_key)
+        if not path.is_file():
+            raise AppError(
+                status_code=500,
+                code="DOCUMENT_STORAGE_ERROR",
+                message="Document could not be read from storage.",
+            )
+        return path
+
     def _path_for_key(self, storage_key: str) -> Path:
         key_path = PurePosixPath(storage_key)
         if key_path.is_absolute() or ".." in key_path.parts:

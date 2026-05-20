@@ -1,7 +1,10 @@
+from pathlib import Path
 from typing import Annotated
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Response, UploadFile, status
 from sqlalchemy.orm import Session
+from starlette.types import Receive, Scope, Send
 
 from app.api.deps import get_current_user
 from app.db.session import get_db
@@ -11,6 +14,45 @@ from app.schemas.document import DocumentRead, DocumentUpdate
 from app.services.document_service import DocumentService
 
 router = APIRouter(tags=["documents"])
+
+
+def _attachment_header(filename: str) -> str:
+    quoted = quote(filename)
+    if quoted != filename:
+        return f"attachment; filename*=utf-8''{quoted}"
+    escaped = filename.replace("\\", "\\\\").replace('"', '\\"')
+    return f'attachment; filename="{escaped}"'
+
+
+class LocalFileResponse(Response):
+    def __init__(self, path: Path, media_type: str, filename: str) -> None:
+        self.path = path
+        super().__init__(
+            content=None,
+            media_type=media_type,
+            headers={"Content-Disposition": _attachment_header(filename)},
+        )
+        if "content-length" in self.headers:
+            del self.headers["content-length"]
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        await send(
+            {
+                "type": "http.response.start",
+                "status": self.status_code,
+                "headers": self.raw_headers,
+            }
+        )
+        with self.path.open("rb") as file:
+            while chunk := file.read(1024 * 1024):
+                await send(
+                    {
+                        "type": "http.response.body",
+                        "body": chunk,
+                        "more_body": True,
+                    }
+                )
+        await send({"type": "http.response.body", "body": b"", "more_body": False})
 
 
 @router.post(
@@ -43,6 +85,20 @@ async def get_document(
     db: Annotated[Session, Depends(get_db)],
 ) -> Document:
     return DocumentService(db).get(document_id, current_user)
+
+
+@router.get("/documents/{document_id}/download")
+async def download_document(
+    document_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> Response:
+    download = DocumentService(db).download(document_id, current_user)
+    return LocalFileResponse(
+        path=download.path,
+        media_type=download.document.content_type,
+        filename=download.document.filename,
+    )
 
 
 @router.put("/documents/{document_id}", response_model=DocumentRead)

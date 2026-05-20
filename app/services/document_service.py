@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 from fastapi import UploadFile
@@ -16,6 +17,12 @@ ALLOWED_DOCUMENT_TYPES = {
     ".pdf": "application/pdf",
     ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
+
+
+@dataclass(frozen=True)
+class DocumentDownload:
+    document: Document
+    path: Path
 
 
 class DocumentService:
@@ -81,6 +88,13 @@ class DocumentService:
         if document is None:
             raise self._document_not_found()
         return document
+
+    def download(self, document_id: int, current_user: User) -> DocumentDownload:
+        document = self.get(document_id, current_user)
+        return DocumentDownload(
+            document=document,
+            path=self.storage.download_path(document.storage_key),
+        )
 
     def update(
         self,

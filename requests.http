@@ -404,11 +404,22 @@ Authorization: Bearer {{bobToken}}
 GET {{baseUrl}}/documents/{{documentId}}
 Authorization: Bearer {{anaToken}}
 
+### Documents - Descargar archivo como Ana
+GET {{baseUrl}}/documents/{{documentId}}/download
+Authorization: Bearer {{anaToken}}
+
 ### Documents - Consultar metadata sin token
 GET {{baseUrl}}/documents/{{documentId}}
 
+### Documents - Descargar archivo sin token
+GET {{baseUrl}}/documents/{{documentId}}/download
+
 ### Documents - Consultar metadata como Bob antes de aceptar invitacion debe devolver 404
 GET {{baseUrl}}/documents/{{documentId}}
+Authorization: Bearer {{bobToken}}
+
+### Documents - Descargar archivo como Bob antes de aceptar invitacion debe devolver 404
+GET {{baseUrl}}/documents/{{documentId}}/download
 Authorization: Bearer {{bobToken}}
 
 ### Documents - Renombrar documento como Ana
