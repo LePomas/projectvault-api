@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir uv && \
     uv pip install --system -r pyproject.toml
 
 COPY app ./app
+COPY scripts ./scripts
 
 EXPOSE 8000
 
