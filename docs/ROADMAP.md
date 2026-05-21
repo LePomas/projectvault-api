@@ -2,7 +2,7 @@
 title: "ProjectVault - Roadmap"
 version: "1.0"
 language: "es-MX"
-last_updated: "2026-05-13"
+last_updated: "2026-05-21"
 purpose: "Fases, prioridades, MVP, backlog y checklist de entrega para ProjectVault."
 ---
 
@@ -260,6 +260,8 @@ Implementar la parte cloud del scope.
 ### Scope
 
 - Crear bucket S3.
+- Usar MinIO como backend S3-compatible local para desarrollo, segun
+  `docs/STORAGE_DECISION_MATRIX.md`.
 - Implementar presigned upload/download.
 - Guardar documentos con `s3_key`.
 - Configurar Lambda para eventos de S3.
@@ -469,6 +471,7 @@ Basic tests
 
 ```text
 S3 integration
+MinIO local S3-compatible backend
 Lambda file-size processing
 CI pipeline
 Alembic migrations
@@ -520,6 +523,7 @@ Antes de presentar el proyecto, verificar:
 [ ] documentos respetan permisos del proyecto
 [ ] se aceptan solo pdf/docx en MVP
 [ ] metadata de documentos se guarda en DB
+[ ] MinIO local funciona como backend S3-compatible
 [ ] S3/presigned URL funciona si aplica
 [ ] Lambda actualiza size metadata si aplica
 [ ] tests pasan localmente

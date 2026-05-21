@@ -2,7 +2,7 @@
 title: "ProjectVault - Target Architecture"
 version: "1.0"
 language: "es-MX"
-last_updated: "2026-05-13"
+last_updated: "2026-05-21"
 purpose: "Arquitectura objetivo, stack recomendado, storage y deployment futuro para ProjectVault."
 ---
 
@@ -39,7 +39,7 @@ purpose: "Arquitectura objetivo, stack recomendado, storage y deployment futuro 
 |---|---|
 | ORM | SQLModel, si se prioriza velocidad sobre control fino |
 | Storage local | Local filesystem adapter |
-| Storage self-hosted | MinIO |
+| Storage self-hosted | MinIO para Fase 5 local; ver `docs/STORAGE_DECISION_MATRIX.md` para MinIO vs SeaweedFS |
 | Background jobs on-premise | Celery, RQ, Arq |
 | Deployment AWS | ECS Fargate, App Runner, Elastic Beanstalk |
 | Deployment self-hosted | Docker Compose + VPS + reverse proxy |
@@ -248,4 +248,3 @@ Celery/RQ/Arq worker → calculate file size / image resize
 | TLS | Caddy automatic HTTPS or reverse proxy config |
 | CI/CD | GitHub Actions → SSH deploy / Docker pull |
 | Backups | pg_dump + object storage backup |
-

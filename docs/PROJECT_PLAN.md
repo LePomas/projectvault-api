@@ -2,7 +2,7 @@
 title: "ProjectVault - Project Plan Index"
 version: "1.1"
 language: "es-MX"
-last_updated: "2026-05-13"
+last_updated: "2026-05-21"
 purpose: "Indice compacto para encontrar contexto de producto, arquitectura objetivo y roadmap sin cargar todo el plan completo."
 ---
 
@@ -36,6 +36,7 @@ Abrir solo el documento necesario para la tarea:
 | ERD actual documentado | `docs/ERD.md` |
 | Requisitos funcionales, reglas de negocio y permisos objetivo | `docs/PRODUCT_SPEC.md` |
 | Arquitectura objetivo, storage y opciones de deployment | `docs/TARGET_ARCHITECTURE.md` |
+| Decision MinIO vs SeaweedFS para Fase 5 | `docs/STORAGE_DECISION_MATRIX.md` |
 | Fases, prioridades, MVP, backlog y checklist de entrega | `docs/ROADMAP.md` |
 
 ## Current vs target
@@ -56,6 +57,8 @@ en el código.
   permisos, modelo de datos recomendado y notas de normalización.
 - `docs/TARGET_ARCHITECTURE.md`: stack objetivo, alternativas aceptables,
   arquitectura interna, abstracción de storage y opciones AWS/on-premise.
+- `docs/STORAGE_DECISION_MATRIX.md`: comparacion MinIO vs SeaweedFS para el
+  desarrollo local/self-hosted de Fase 5.
 - `docs/ROADMAP.md`: roadmap de fases, MVP vs stretch goals, backlog por
   prioridad, checklist final y contenido recomendado de entrega.
 
