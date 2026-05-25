@@ -25,11 +25,12 @@ Do not add a new framework, package manager, CI system, deployment tool, or migr
 - `app/schemas/`: Pydantic schemas
 - `app/services/`: business rules, permissions, transactions
 - `app/repositories/`: database access helpers
+- `alembic/versions/`: standard location for future Alembic migration scripts
 - `db/init/001_initial_schema.sql`: PostgreSQL bootstrap schema
 - `tests/`: async API tests with dependency overrides
 - `docs/`: conventions, ERD notes, roadmap
 
-Keep ORM models and `db/init/001_initial_schema.sql` aligned until a migration workflow exists.
+Keep ORM models and `db/init/001_initial_schema.sql` aligned until a migration workflow exists. Once Alembic is configured, keep migration scripts under `alembic/versions/`.
 
 ## Commands
 

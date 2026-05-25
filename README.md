@@ -21,7 +21,7 @@ Secure project profiles and document management API.
 - AWS S3
 - AWS Lambda
 - GitHub Actions / GitLab CI
-- Alembic migration workflow
+- Alembic migration workflow using `alembic/versions/`
 
 ## Local development
 
@@ -119,11 +119,15 @@ for `diego` after each run.
 app/
   api/              API routes
   core/             Settings and core config
-  db/               Database connection and migrations
+  db/               Database connection setup
   models/           SQLAlchemy models
   schemas/          Pydantic schemas
   services/         Business logic
   repositories/     Database access logic
+alembic/
+  versions/         Future Alembic migration scripts
+db/
+  init/             PostgreSQL bootstrap SQL
 tests/              Automated tests
 docs/               Technical documentation
 ```
