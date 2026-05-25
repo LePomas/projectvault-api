@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.document import Document
 from app.models.project import Project
+from app.services.storage import PresignedUrl, StoredObjectMetadata
 
 pytestmark = pytest.mark.anyio
 
@@ -96,6 +97,62 @@ async def upload_pdf(
 
 def stored_file(storage_path: Path, storage_key: str) -> Path:
     return storage_path.joinpath(*storage_key.split("/"))
+
+
+class FakeS3Storage:
+    def __init__(self) -> None:
+        self.objects: dict[str, StoredObjectMetadata] = {}
+        self.deleted_keys: list[str] = []
+
+    def generate_key(self, project_id: int, filename: str) -> str:
+        suffix = Path(filename).suffix.lower()
+        return f"projects/{project_id}/fake-s3-document{suffix}"
+
+    def save(self, storage_key, source, content_type=None):
+        raise AssertionError("S3 API tests should not use multipart save")
+
+    def delete(self, storage_key: str) -> None:
+        self.deleted_keys.append(storage_key)
+        self.objects.pop(storage_key, None)
+
+    def download_path(self, storage_key: str):
+        raise AssertionError("S3 API tests should not use local download paths")
+
+    def presign_upload(self, storage_key: str, content_type: str) -> PresignedUrl:
+        return PresignedUrl(
+            url=f"http://localhost:9000/projectvault-documents/{storage_key}?upload",
+            expires_in=900,
+            headers={"Content-Type": content_type},
+        )
+
+    def presign_download(self, storage_key: str) -> PresignedUrl:
+        return PresignedUrl(
+            url=f"http://localhost:9000/projectvault-documents/{storage_key}?download",
+            expires_in=900,
+            headers={},
+        )
+
+    def get_metadata(self, storage_key: str) -> StoredObjectMetadata:
+        try:
+            return self.objects[storage_key]
+        except KeyError as exc:
+            from app.core.exceptions import AppError
+
+            raise AppError(
+                status_code=500,
+                code="DOCUMENT_STORAGE_ERROR",
+                message="Document could not be read from storage.",
+            ) from exc
+
+
+@pytest.fixture
+def fake_s3_storage(monkeypatch: pytest.MonkeyPatch) -> FakeS3Storage:
+    storage = FakeS3Storage()
+    monkeypatch.setattr(
+        "app.services.document_service.get_document_storage",
+        lambda: storage,
+    )
+    return storage
 
 
 async def test_owner_can_upload_list_read_rename_and_delete_document(
@@ -270,6 +327,131 @@ async def test_download_missing_storage_file_returns_storage_error(
 
     assert response.status_code == 500
     assert response.json()["error"]["code"] == "DOCUMENT_STORAGE_ERROR"
+
+
+async def test_presigned_upload_complete_and_download_url_update_document_totals(
+    client: AsyncClient,
+    db_session: Session,
+    fake_s3_storage: FakeS3Storage,
+) -> None:
+    token = await register_and_login(client, "owner", "owner@example.com")
+    project = await create_project(client, token)
+
+    presign_response = await client.post(
+        f"/projects/{project['id']}/documents/presign-upload",
+        headers=bearer(token),
+        json={"filename": "contract.pdf", "content_type": "application/pdf"},
+    )
+    assert presign_response.status_code == 201
+    presign_body = presign_response.json()
+    assert presign_body["headers"] == {"Content-Type": "application/pdf"}
+    assert presign_body["upload_url"].endswith("?upload")
+
+    db_session.expire_all()
+    pending_document = db_session.get(Document, presign_body["document_id"])
+    pending_project = db_session.get(Project, project["id"])
+    assert pending_document is not None
+    assert pending_project is not None
+    assert pending_document.status == "pending_upload"
+    assert pending_document.size_bytes == 0
+    assert pending_project.documents_count == 0
+    assert pending_project.total_size_bytes == 0
+
+    fake_s3_storage.objects[presign_body["storage_key"]] = StoredObjectMetadata(
+        size_bytes=1234,
+        content_type="application/pdf",
+    )
+    complete_response = await client.post(
+        f"/projects/{project['id']}/documents/complete-upload",
+        headers=bearer(token),
+        json={"document_id": presign_body["document_id"]},
+    )
+    second_complete_response = await client.post(
+        f"/projects/{project['id']}/documents/complete-upload",
+        headers=bearer(token),
+        json={"document_id": presign_body["document_id"]},
+    )
+    download_url_response = await client.get(
+        f"/documents/{presign_body['document_id']}/download-url",
+        headers=bearer(token),
+    )
+
+    assert complete_response.status_code == 200
+    assert complete_response.json()["status"] == "uploaded"
+    assert complete_response.json()["size_bytes"] == 1234
+    assert second_complete_response.status_code == 200
+    assert download_url_response.status_code == 200
+    assert download_url_response.json()["download_url"].endswith("?download")
+
+    db_session.expire_all()
+    completed_project = db_session.get(Project, project["id"])
+    assert completed_project is not None
+    assert completed_project.documents_count == 1
+    assert completed_project.total_size_bytes == 1234
+
+
+async def test_complete_upload_requires_existing_s3_object(
+    client: AsyncClient,
+    fake_s3_storage: FakeS3Storage,
+) -> None:
+    token = await register_and_login(client, "owner", "owner@example.com")
+    project = await create_project(client, token)
+
+    presign_response = await client.post(
+        f"/projects/{project['id']}/documents/presign-upload",
+        headers=bearer(token),
+        json={"filename": "contract.pdf", "content_type": "application/pdf"},
+    )
+    assert presign_response.status_code == 201
+
+    response = await client.post(
+        f"/projects/{project['id']}/documents/complete-upload",
+        headers=bearer(token),
+        json={"document_id": presign_response.json()["document_id"]},
+    )
+
+    assert fake_s3_storage.objects == {}
+    assert response.status_code == 500
+    assert response.json()["error"]["code"] == "DOCUMENT_STORAGE_ERROR"
+
+
+async def test_presigned_document_endpoints_hide_inaccessible_documents(
+    client: AsyncClient,
+    fake_s3_storage: FakeS3Storage,
+) -> None:
+    owner_token = await register_and_login(client, "owner", "owner@example.com")
+    outsider_token = await register_and_login(client, "outsider", "out@example.com")
+    project = await create_project(client, owner_token)
+    presign_response = await client.post(
+        f"/projects/{project['id']}/documents/presign-upload",
+        headers=bearer(owner_token),
+        json={"filename": "contract.pdf", "content_type": "application/pdf"},
+    )
+    assert presign_response.status_code == 201
+    document_id = presign_response.json()["document_id"]
+    fake_s3_storage.objects[presign_response.json()["storage_key"]] = (
+        StoredObjectMetadata(size_bytes=12, content_type="application/pdf")
+    )
+    await client.post(
+        f"/projects/{project['id']}/documents/complete-upload",
+        headers=bearer(owner_token),
+        json={"document_id": document_id},
+    )
+
+    complete_response = await client.post(
+        f"/projects/{project['id']}/documents/complete-upload",
+        headers=bearer(outsider_token),
+        json={"document_id": document_id},
+    )
+    download_url_response = await client.get(
+        f"/documents/{document_id}/download-url",
+        headers=bearer(outsider_token),
+    )
+
+    assert complete_response.status_code == 404
+    assert complete_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
+    assert download_url_response.status_code == 404
+    assert download_url_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
 
 
 async def test_document_endpoints_hide_inaccessible_documents(
