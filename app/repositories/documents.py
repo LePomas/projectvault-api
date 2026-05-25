@@ -20,6 +20,7 @@ class DocumentRepository:
         content_type: str,
         size_bytes: int,
         storage_key: str,
+        status: str = "uploaded",
     ) -> Document:
         document = Document(
             project_id=project_id,
@@ -28,11 +29,33 @@ class DocumentRepository:
             content_type=content_type,
             size_bytes=size_bytes,
             storage_key=storage_key,
-            status="uploaded",
+            status=status,
         )
         self.db.add(document)
         self.db.flush()
         return document
+
+    def get_accessible_pending_for_project(
+        self,
+        *,
+        document_id: int,
+        project_id: int,
+        user_id: int,
+    ) -> Document | None:
+        statement = (
+            select(Document)
+            .join(Project, Project.id == Document.project_id)
+            .join(ProjectMember, ProjectMember.project_id == Project.id)
+            .where(
+                Document.id == document_id,
+                Document.project_id == project_id,
+                ProjectMember.user_id == user_id,
+                Project.deleted_at.is_(None),
+                Document.deleted_at.is_(None),
+                Document.status.in_(("pending_upload", "uploaded")),
+            )
+        )
+        return self.db.scalar(statement)
 
     def list_for_accessible_project(
         self,
@@ -73,6 +96,21 @@ class DocumentRepository:
 
     def update_filename(self, document: Document, filename: str) -> Document:
         document.filename = filename
+        document.updated_at = datetime.now(UTC)
+        self.db.flush()
+        return document
+
+    def mark_uploaded(
+        self,
+        document: Document,
+        *,
+        size_bytes: int,
+        content_type: str | None,
+    ) -> Document:
+        document.size_bytes = size_bytes
+        if content_type is not None:
+            document.content_type = content_type
+        document.status = "uploaded"
         document.updated_at = datetime.now(UTC)
         self.db.flush()
         return document
