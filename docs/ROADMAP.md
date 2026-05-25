@@ -221,7 +221,7 @@ GET    /projects/{project_id}/documents
 POST   /projects/{project_id}/documents
 GET    /documents/{document_id}
 GET    /documents/{document_id}/download
-PUT    /documents/{document_id}
+PATCH  /documents/{document_id}
 DELETE /documents/{document_id}
 ```
 

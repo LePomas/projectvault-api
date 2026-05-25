@@ -151,6 +151,7 @@ async def get_document_download_url(
     )
 
 
+@router.patch("/documents/{document_id}", response_model=DocumentRead)
 @router.put("/documents/{document_id}", response_model=DocumentRead)
 async def update_document(
     document_id: int,

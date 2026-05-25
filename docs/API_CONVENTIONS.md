@@ -91,6 +91,22 @@ Supported file types:
 
 `GET /documents/{document_id}` returns JSON metadata.
 
+Rename a document:
+
+```http
+PATCH /documents/{document_id}
+Content-Type: application/json
+```
+
+```json
+{
+  "filename": "renamed-contract.pdf"
+}
+```
+
+`PUT /documents/{document_id}` remains available as a compatibility route for
+the same rename payload.
+
 Phase 4 local downloads use direct backend file responses:
 
 ```http

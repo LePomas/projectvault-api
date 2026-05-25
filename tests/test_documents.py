@@ -193,7 +193,7 @@ async def test_owner_can_upload_list_read_rename_and_delete_document(
         f"/documents/{document['id']}/download",
         headers=bearer(token),
     )
-    update_response = await client.put(
+    update_response = await client.patch(
         f"/documents/{document['id']}",
         headers=bearer(token),
         json={"filename": "renamed.pdf"},
@@ -269,7 +269,7 @@ async def test_participant_can_manage_project_documents(
         f"/projects/{project['id']}/documents",
         headers=bearer(participant_token),
     )
-    update_response = await client.put(
+    update_response = await client.patch(
         f"/documents/{document['id']}",
         headers=bearer(participant_token),
         json={"filename": "participant-renamed.pdf"},
@@ -310,6 +310,21 @@ async def test_upload_accepts_docx(client: AsyncClient) -> None:
 
     assert response.status_code == 201
     assert response.json()["filename"] == "brief.docx"
+
+
+async def test_put_document_rename_remains_supported(client: AsyncClient) -> None:
+    token = await register_and_login(client, "owner", "owner@example.com")
+    project = await create_project(client, token)
+    document = await upload_pdf(client, token, project["id"])
+
+    response = await client.put(
+        f"/documents/{document['id']}",
+        headers=bearer(token),
+        json={"filename": "put-renamed.pdf"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["filename"] == "put-renamed.pdf"
 
 
 async def test_download_missing_storage_file_returns_storage_error(
@@ -475,7 +490,7 @@ async def test_document_endpoints_hide_inaccessible_documents(
         f"/documents/{document['id']}/download",
         headers=bearer(outsider_token),
     )
-    update_response = await client.put(
+    update_response = await client.patch(
         f"/documents/{document['id']}",
         headers=bearer(outsider_token),
         json={"filename": "stolen.pdf"},
@@ -532,7 +547,8 @@ async def test_document_endpoints_require_authentication(
     list_response = await client.get("/projects/1/documents")
     read_response = await client.get("/documents/1")
     download_response = await client.get("/documents/1/download")
-    update_response = await client.put("/documents/1", json={"filename": "x.pdf"})
+    patch_response = await client.patch("/documents/1", json={"filename": "x.pdf"})
+    put_response = await client.put("/documents/1", json={"filename": "x.pdf"})
     delete_response = await client.delete("/documents/1")
 
     assert upload_response.status_code == 401
@@ -543,7 +559,9 @@ async def test_document_endpoints_require_authentication(
     assert read_response.json()["error"]["code"] == "MISSING_TOKEN"
     assert download_response.status_code == 401
     assert download_response.json()["error"]["code"] == "MISSING_TOKEN"
-    assert update_response.status_code == 401
-    assert update_response.json()["error"]["code"] == "MISSING_TOKEN"
+    assert patch_response.status_code == 401
+    assert patch_response.json()["error"]["code"] == "MISSING_TOKEN"
+    assert put_response.status_code == 401
+    assert put_response.json()["error"]["code"] == "MISSING_TOKEN"
     assert delete_response.status_code == 401
     assert delete_response.json()["error"]["code"] == "MISSING_TOKEN"

@@ -76,6 +76,7 @@ Only run `ruff format .` when formatting changes are intended.
 - Register route modules through `app/api/routes.py`.
 - Use plural REST resources such as `/projects` and `/documents`.
 - Use `PATCH` for partial updates.
+- Document renames use `PATCH /documents/{document_id}`. Keep the existing `PUT /documents/{document_id}` compatibility route unless routes, schemas, docs, and tests are deliberately updated together.
 - Do not use `GET` for state-changing actions.
 - Protected endpoints must depend on `get_current_user`.
 - Successful creates return `201`; reads and updates `200`; deletes `204`.
