@@ -179,4 +179,3 @@ Workers should list changed files and verification results.
 - Do not invent Makefile, CI, deployment, migration, or dependency commands that are not present.
 - Do not modify application code when the request is only to update project guidance.
 - Do not commit `.env`, `.venv`, caches, `__pycache__`, or generated local artifacts.
-- Do not introduce S3, Lambda, CI/CD, Alembic migrations, or deployment work unless explicitly requested.
