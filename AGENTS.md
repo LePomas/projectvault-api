@@ -109,6 +109,53 @@ Add or update tests for behavior changes, especially auth, protected endpoints, 
 
 Keep tests isolated from the developer database. Follow the current in-memory SQLite fixture pattern unless a test explicitly needs PostgreSQL behavior.
 
+## Sub-Agent Profiles
+
+These are reusable prompt profiles, not tool-level agent types. When delegating,
+spawn the available `explorer` or `worker` role and include the matching profile
+name and focus below.
+
+- `api-route-reviewer` (`explorer`): Review FastAPI routes for thin handlers,
+  `get_current_user` on protected endpoints, registration through
+  `app/api/routes.py`, plural REST resources, correct status codes, and
+  `AppError` response consistency.
+- `auth-security-reviewer` (`explorer`): Review password hashing, JWT settings
+  and validation, auth dependencies, user identity loading, secret hygiene, and
+  changes that could weaken `app/core/security.py` or protected endpoints.
+- `permissions-auditor` (`explorer`): Review project and document access for
+  owner/participant role enforcement, soft-delete handling, cross-user exposure,
+  and service-layer permission checks before repository/database behavior.
+- `db-model-sync-auditor` (`explorer`): Compare ORM model changes with
+  `db/init/001_initial_schema.sql` and flag drift while there is no migration
+  workflow.
+- `test-coverage-worker` (`worker`): Add focused pytest coverage for changed
+  behavior, especially auth, protected endpoints, permission checks,
+  project/document access, status codes, and the existing `AppError` shape.
+  Follow the in-memory SQLite fixture pattern.
+- `service-layer-worker` (`worker`): Implement or refactor business logic in
+  `app/services/`, keeping orchestration, transactions, and permission checks
+  out of route handlers.
+- `repository-worker` (`worker`): Own database query and persistence changes in
+  `app/repositories/`, keep SQLAlchemy patterns consistent, and avoid
+  route-level database logic.
+- `schema-contract-reviewer` (`explorer`): Review Pydantic request and response
+  schemas for validation correctness, API compatibility, naming consistency,
+  and accidental data exposure.
+- `ruff-style-fixer` (`worker`): Handle mechanical Python style issues from
+  Ruff without broad refactors or behavior changes.
+- `docs-consistency-reviewer` (`explorer`): Check README and docs updates
+  against actual code behavior, especially avoiding roadmap claims from
+  `docs/PROJECT_PLAN.md` as implemented facts.
+- `api-regression-tester` (`worker`): Run or design endpoint-level regression
+  checks around create/read/update/delete behavior, status codes, and error
+  shapes.
+- `config-env-reviewer` (`explorer`): Review settings and environment changes,
+  including `pydantic-settings`, `.env.example`, `DATABASE_URL`, JWT config
+  names, and secret hygiene.
+
+Reviewers should return findings with file references and any checks they ran.
+Workers should list changed files and verification results.
+
 ## Environment
 
 - Settings use `pydantic-settings` and environment variables.
