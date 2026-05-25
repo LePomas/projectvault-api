@@ -135,6 +135,7 @@ class S3DocumentStorage:
         region: str | None = None,
         expires_in: int | None = None,
         client: object | None = None,
+        presign_client: object | None = None,
     ) -> None:
         self.bucket = bucket or settings.s3_bucket
         self.endpoint_url = endpoint_url or settings.s3_endpoint_url
@@ -144,11 +145,25 @@ class S3DocumentStorage:
             else settings.s3_public_endpoint_url
         )
         self.expires_in = expires_in or settings.s3_presigned_url_expires_seconds
+        access_key = access_key or settings.s3_access_key
+        secret_key = secret_key or settings.s3_secret_key
+        region = region or settings.s3_region
         self.client = client or self._create_client(
             endpoint_url=self.endpoint_url,
-            access_key=access_key or settings.s3_access_key,
-            secret_key=secret_key or settings.s3_secret_key,
-            region=region or settings.s3_region,
+            access_key=access_key,
+            secret_key=secret_key,
+            region=region,
+        )
+        presign_endpoint_url = self.public_endpoint_url or self.endpoint_url
+        self.presign_client = presign_client or (
+            self.client
+            if client is not None or presign_endpoint_url == self.endpoint_url
+            else self._create_client(
+                endpoint_url=presign_endpoint_url,
+                access_key=access_key,
+                secret_key=secret_key,
+                region=region,
+            )
         )
 
     def generate_key(self, project_id: int, filename: str) -> str:
@@ -191,7 +206,7 @@ class S3DocumentStorage:
 
     def presign_upload(self, storage_key: str, content_type: str) -> PresignedUrl:
         try:
-            url = self.client.generate_presigned_url(
+            url = self.presign_client.generate_presigned_url(
                 "put_object",
                 Params={
                     "Bucket": self.bucket,
@@ -205,14 +220,14 @@ class S3DocumentStorage:
                 "Document upload URL could not be generated."
             ) from exc
         return PresignedUrl(
-            url=self._public_url(url),
+            url=url,
             expires_in=self.expires_in,
             headers={"Content-Type": content_type},
         )
 
     def presign_download(self, storage_key: str) -> PresignedUrl:
         try:
-            url = self.client.generate_presigned_url(
+            url = self.presign_client.generate_presigned_url(
                 "get_object",
                 Params={
                     "Bucket": self.bucket,
@@ -225,7 +240,7 @@ class S3DocumentStorage:
                 "Document download URL could not be generated."
             ) from exc
         return PresignedUrl(
-            url=self._public_url(url),
+            url=url,
             expires_in=self.expires_in,
             headers={},
         )
@@ -244,11 +259,6 @@ class S3DocumentStorage:
             size_bytes=int(response["ContentLength"]),
             content_type=response.get("ContentType"),
         )
-
-    def _public_url(self, url: str) -> str:
-        if not self.endpoint_url or not self.public_endpoint_url:
-            return url
-        return url.replace(self.endpoint_url, self.public_endpoint_url, 1)
 
     @staticmethod
     def _create_client(

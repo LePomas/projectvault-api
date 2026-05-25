@@ -15,6 +15,7 @@ pytestmark = pytest.mark.anyio
 @pytest.fixture(autouse=True)
 def document_storage_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     storage_path = tmp_path / "documents"
+    monkeypatch.setattr(settings, "document_storage_backend", "local")
     monkeypatch.setattr(settings, "document_storage_path", str(storage_path))
     return storage_path
 
