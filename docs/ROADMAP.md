@@ -246,8 +246,10 @@ DELETE /documents/{document_id}
 - Implementado: descarga directa de bytes por backend con storage local.
 - Implementado: validacion `.pdf`/`.docx`, `content_type`, permisos y tests.
 - Implementado: ejemplos Phase 4 en `requests.http`.
-- Pendiente: URL presignada de descarga para Fase 5/S3.
-- Pendiente: interfaz formal de storage/presigned methods para handoff S3.
+- Implementado: MinIO local como backend S3-compatible para desarrollo.
+- Implementado: URLs presignadas de upload/download y `complete-upload` local.
+- Pendiente: Lambda/eventos AWS.
+- Pendiente: limites de almacenamiento por proyecto.
 
 ## Fase 5 - S3 + Lambda + limites de almacenamiento
 
@@ -259,11 +261,10 @@ Implementar la parte cloud del scope.
 
 ### Scope
 
-- Crear bucket S3.
 - Usar MinIO como backend S3-compatible local para desarrollo, segun
   `docs/STORAGE_DECISION_MATRIX.md`.
 - Implementar presigned upload/download.
-- Guardar documentos con `s3_key`.
+- Guardar documentos con `storage_key` backend-agnostico.
 - Configurar Lambda para eventos de S3.
 - Cuando se sube archivo:
   - calcular tamano
@@ -283,8 +284,9 @@ GET  /documents/{document_id}/download-url
 ### Entregables
 
 - S3 funcional.
+- MinIO local funcional.
+- Metadata actualizada desde `complete-upload` local.
 - Lambda funcional.
-- Metadata actualizada desde evento.
 - Limite de tamano por proyecto.
 
 ### Definition of Done

@@ -7,6 +7,7 @@ Secure project profiles and document management API.
 - Python 3.12+
 - FastAPI
 - PostgreSQL
+- MinIO for local S3-compatible document storage
 - SQLAlchemy
 - Docker Compose
 - Pydantic v2
@@ -61,6 +62,18 @@ http://localhost:8000/docs
 
 Uploaded documents are stored locally under `DOCUMENT_STORAGE_PATH`, which
 defaults to `storage/documents` for local development.
+
+To use the Phase 5 S3-compatible document flow against local MinIO, set this in
+`.env` before starting Docker Compose:
+
+```env
+DOCUMENT_STORAGE_BACKEND=s3
+```
+
+Docker Compose starts MinIO on `http://localhost:9000` and the MinIO console on
+`http://localhost:9001`. The bucket-init container creates the configured
+`S3_BUCKET` automatically. The API uses `S3_ENDPOINT_URL` inside Docker and
+rewrites presigned URLs to `S3_PUBLIC_ENDPOINT_URL` for host-side clients.
 
 ### 5. Seed sample data
 

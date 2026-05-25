@@ -100,3 +100,52 @@ GET /documents/{document_id}/download
 The download endpoint returns file bytes, not JSON, after the same project-access
 checks as document metadata reads. Presigned download URLs are reserved for the
 S3 phase.
+
+## S3-compatible document uploads
+
+Phase 5 adds S3-compatible uploads for local MinIO development and future S3
+deployment. The API speaks standard S3-compatible storage through configuration;
+it does not call MinIO-specific APIs.
+
+Start an upload:
+
+```http
+POST /projects/{project_id}/documents/presign-upload
+Content-Type: application/json
+```
+
+```json
+{
+  "filename": "contract.pdf",
+  "content_type": "application/pdf"
+}
+```
+
+The response creates document metadata with `status="pending_upload"` and
+returns a presigned PUT URL plus required upload headers. Pending uploads do not
+increment project document totals.
+
+Complete an upload after the client PUTs the object:
+
+```http
+POST /projects/{project_id}/documents/complete-upload
+Content-Type: application/json
+```
+
+```json
+{
+  "document_id": 1
+}
+```
+
+The backend verifies the object in storage, reads its size, marks the document
+as `uploaded`, and updates project document totals. Repeating completion for an
+already uploaded document is idempotent.
+
+Get a presigned download URL:
+
+```http
+GET /documents/{document_id}/download-url
+```
+
+The response is JSON with `download_url` and `expires_in`.

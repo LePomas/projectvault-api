@@ -26,6 +26,8 @@
 @ownerInviteToken = paste-owner-invite-token-here
 @seedDiegoInviteToken = sample-gamma-diego-pending-token
 @documentId = 1
+@presignedDocumentId = 1
+@presignedUploadUrl = paste-presigned-upload-url-here
 
 
 ### Health - Estado del servicio
@@ -421,6 +423,32 @@ Content-Type: text/plain
 This filename is PDF but content type is text/plain
 --ProjectVaultBoundary--
 
+### Documents S3 - Pedir URL presignada de upload PDF
+POST {{baseUrl}}/projects/{{projectId}}/documents/presign-upload
+Authorization: Bearer {{anaToken}}
+Content-Type: application/json
+
+{
+  "filename": "contract.pdf",
+  "content_type": "application/pdf"
+}
+
+### Documents S3 - Subir objeto con URL presignada
+PUT {{presignedUploadUrl}}
+Content-Type: application/pdf
+
+%PDF-1.7
+ProjectVault S3-compatible PDF content
+
+### Documents S3 - Completar upload
+POST {{baseUrl}}/projects/{{projectId}}/documents/complete-upload
+Authorization: Bearer {{anaToken}}
+Content-Type: application/json
+
+{
+  "document_id": {{presignedDocumentId}}
+}
+
 ### Documents - Listar documentos como Ana
 GET {{baseUrl}}/projects/{{projectId}}/documents
 Authorization: Bearer {{anaToken}}
@@ -438,6 +466,10 @@ Authorization: Bearer {{anaToken}}
 
 ### Documents - Descargar archivo como Ana
 GET {{baseUrl}}/documents/{{documentId}}/download
+Authorization: Bearer {{anaToken}}
+
+### Documents S3 - Obtener URL presignada de descarga
+GET {{baseUrl}}/documents/{{documentId}}/download-url
 Authorization: Bearer {{anaToken}}
 
 ### Documents - Consultar metadata sin token
