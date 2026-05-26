@@ -57,6 +57,17 @@ class DocumentRepository:
         )
         return self.db.scalar(statement)
 
+    def get_by_storage_key(self, storage_key: str) -> Document | None:
+        statement = (
+            select(Document)
+            .join(Project, Project.id == Document.project_id)
+            .where(
+                Document.storage_key == storage_key,
+                Project.deleted_at.is_(None),
+            )
+        )
+        return self.db.scalar(statement)
+
     def list_for_accessible_project(
         self,
         project_id: int,

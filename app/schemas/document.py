@@ -25,6 +25,7 @@ class DocumentUpdate(BaseModel):
 class DocumentPresignUploadRequest(BaseModel):
     filename: str = Field(min_length=1, max_length=255)
     content_type: str = Field(min_length=1, max_length=255)
+    size_bytes: int | None = Field(default=None, ge=0)
 
 
 class DocumentPresignUploadRead(BaseModel):

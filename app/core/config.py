@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "change-this-local-secret-with-32-bytes-minimum"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
+    project_storage_limit_bytes: int = 104_857_600
     document_storage_backend: str = "local"
     document_storage_path: str = "storage/documents"
     s3_endpoint_url: str | None = None

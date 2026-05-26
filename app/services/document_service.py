@@ -1,12 +1,15 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import BinaryIO
 
 from fastapi import UploadFile
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.exceptions import AppError
 from app.models.document import Document
+from app.models.project import Project
 from app.models.user import User
 from app.repositories.documents import DocumentRepository
 from app.repositories.projects import ProjectRepository
@@ -36,6 +39,15 @@ class DocumentDownloadUrl:
     expires_in: int
 
 
+@dataclass(frozen=True)
+class DocumentUploadEventResult:
+    storage_key: str
+    status: str
+    document_id: int | None = None
+    reason: str | None = None
+    size_bytes: int | None = None
+
+
 class DocumentService:
     def __init__(
         self,
@@ -58,9 +70,11 @@ class DocumentService:
             raise self._project_not_found()
 
         filename = self._validate_upload(file)
+        size_bytes = self._source_size(file.file)
+        self._ensure_storage_available(project, size_bytes)
         storage_key = self.storage.generate_key(project_id, filename)
         file.file.seek(0)
-        size_bytes = self.storage.save(storage_key, file.file, file.content_type)
+        saved_size_bytes = self.storage.save(storage_key, file.file, file.content_type)
 
         try:
             document = self.documents.create(
@@ -68,13 +82,13 @@ class DocumentService:
                 uploaded_by_id=current_user.id,
                 filename=filename,
                 content_type=file.content_type or "",
-                size_bytes=size_bytes,
+                size_bytes=saved_size_bytes,
                 storage_key=storage_key,
             )
             self.projects.adjust_document_totals(
                 project,
                 count_delta=1,
-                size_delta=size_bytes,
+                size_delta=saved_size_bytes,
             )
             self.db.commit()
             self.db.refresh(document)
@@ -102,6 +116,8 @@ class DocumentService:
             payload.filename,
             payload.content_type,
         )
+        if payload.size_bytes is not None:
+            self._ensure_storage_available(project, payload.size_bytes)
         storage_key = self.storage.generate_key(project_id, filename)
         presigned = self.storage.presign_upload(storage_key, payload.content_type)
 
@@ -149,7 +165,81 @@ class DocumentService:
         if document.status == "uploaded":
             return document
 
+        completed_document = self._complete_pending_upload(
+            document,
+            raise_on_limit=True,
+        )
+        if completed_document is None:
+            raise self._document_not_found()
+        return completed_document
+
+    def complete_upload_by_storage_key(
+        self,
+        storage_key: str,
+    ) -> DocumentUploadEventResult:
+        document = self.documents.get_by_storage_key(storage_key)
+        if document is None:
+            return DocumentUploadEventResult(
+                storage_key=storage_key,
+                status="skipped",
+                reason="document_not_found",
+            )
+        if document.deleted_at is not None or document.status == "deleted":
+            return DocumentUploadEventResult(
+                storage_key=storage_key,
+                status="skipped",
+                document_id=document.id,
+                reason="document_deleted",
+            )
+        if document.status == "uploaded":
+            return DocumentUploadEventResult(
+                storage_key=storage_key,
+                status="already_uploaded",
+                document_id=document.id,
+                size_bytes=document.size_bytes,
+            )
+        if document.status != "pending_upload":
+            return DocumentUploadEventResult(
+                storage_key=storage_key,
+                status="skipped",
+                document_id=document.id,
+                reason="unsupported_document_status",
+            )
+
+        document_id = document.id
+        document = self._complete_pending_upload(document, raise_on_limit=False)
+        if document is None:
+            return DocumentUploadEventResult(
+                storage_key=storage_key,
+                status="rejected",
+                document_id=document_id,
+                reason="storage_limit_exceeded",
+            )
+        return DocumentUploadEventResult(
+            storage_key=storage_key,
+            status="uploaded",
+            document_id=document.id,
+            size_bytes=document.size_bytes,
+        )
+
+    def _complete_pending_upload(
+        self,
+        document: Document,
+        *,
+        raise_on_limit: bool,
+    ) -> Document | None:
         metadata = self.storage.get_metadata(document.storage_key)
+        if not self._has_storage_available(document.project, metadata.size_bytes):
+            self.storage.delete(document.storage_key)
+            self.documents.soft_delete(document)
+            self.db.commit()
+            if raise_on_limit:
+                raise self._storage_limit_exceeded(
+                    document.project,
+                    metadata.size_bytes,
+                )
+            return None
+
         try:
             document = self.documents.mark_uploaded(
                 document,
@@ -260,6 +350,29 @@ class DocumentService:
         return filename
 
     @staticmethod
+    def _source_size(source: BinaryIO) -> int:
+        current_position = source.tell()
+        source.seek(0, 2)
+        size_bytes = source.tell()
+        source.seek(current_position)
+        return size_bytes
+
+    @staticmethod
+    def _has_storage_available(project: Project, requested_size_bytes: int) -> bool:
+        limit = settings.project_storage_limit_bytes
+        if limit <= 0:
+            return True
+        return project.total_size_bytes + requested_size_bytes <= limit
+
+    @staticmethod
+    def _ensure_storage_available(
+        project: Project,
+        requested_size_bytes: int,
+    ) -> None:
+        if not DocumentService._has_storage_available(project, requested_size_bytes):
+            raise DocumentService._storage_limit_exceeded(project, requested_size_bytes)
+
+    @staticmethod
     def _project_not_found() -> AppError:
         return AppError(
             status_code=404,
@@ -281,4 +394,20 @@ class DocumentService:
             status_code=415,
             code="UNSUPPORTED_DOCUMENT_TYPE",
             message="Only PDF and DOCX documents are supported.",
+        )
+
+    @staticmethod
+    def _storage_limit_exceeded(
+        project: Project,
+        requested_size_bytes: int,
+    ) -> AppError:
+        return AppError(
+            status_code=413,
+            code="PROJECT_STORAGE_LIMIT_EXCEEDED",
+            message="Project storage limit would be exceeded.",
+            details={
+                "limit_bytes": settings.project_storage_limit_bytes,
+                "current_size_bytes": project.total_size_bytes,
+                "requested_size_bytes": requested_size_bytes,
+            },
         )
