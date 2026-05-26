@@ -3,28 +3,28 @@ title: "ProjectVault - Storage Decision Matrix"
 version: "1.0"
 language: "es-MX"
 last_updated: "2026-05-21"
-purpose: "Comparacion de MinIO y SeaweedFS para el desarrollo de la siguiente fase de storage S3-compatible."
+purpose: "Decision puntual de arquitectura para elegir entre MinIO y SeaweedFS como backend S3-compatible local."
 ---
 
 # Storage Decision Matrix
 
-> Este documento es una decision de arquitectura para Fase 5. No significa que
-> MinIO, SeaweedFS, S3, Lambda o URLs presignadas ya esten implementadas.
+> Este documento registra una decision puntual tomada el 2026-05-21. No es un
+> documento vivo de estado del repositorio.
 
 ## Contexto
 
-ProjectVault ya tiene Fase 4 con storage local y descarga servida por el
-backend. La siguiente fase necesita preparar el flujo S3-compatible:
+ProjectVault necesitaba elegir un backend local para validar un flujo
+S3-compatible:
 
 - upload/download con URLs presignadas
 - una abstraccion formal de storage
 - metadata de documentos sincronizada con el storage
 - limites de almacenamiento por proyecto
-- compatibilidad futura con AWS S3/Lambda
+- compatibilidad futura con AWS S3 y procesamiento de eventos
 
-La decision aqui es que servicio conviene usar durante desarrollo local y
-self-hosted para probar el contrato S3-compatible antes de mover el target
-principal a AWS S3.
+La decision aqui fue que servicio convenia usar durante desarrollo local y
+self-hosted para probar el contrato S3-compatible antes de mover un target cloud
+a AWS S3.
 
 ## Opciones comparadas
 
@@ -127,26 +127,6 @@ SeaweedFS seria mejor si cambia una de estas condiciones:
 - se espera una carga dominante de muchisimos archivos pequenos;
 - se quiere evaluar una plataforma de storage distribuido, no solo un reemplazo
   local de S3.
-
-## Consecuencias para Fase 5
-
-Implementar la fase en este orden:
-
-1. Crear `StorageService` formal con metodos para upload, delete y URLs
-   presignadas.
-2. Mantener `LocalDocumentStorage` para Fase 4 y tests existentes.
-3. Agregar `S3DocumentStorage` usando cliente S3-compatible.
-4. Configurar MinIO solo en Docker Compose/desarrollo local.
-5. Agregar endpoints:
-
-```http
-POST /projects/{project_id}/documents/presign-upload
-POST /projects/{project_id}/documents/complete-upload
-GET  /documents/{document_id}/download-url
-```
-
-6. Dejar Lambda/eventos como target AWS; para local, simular el evento desde
-   `complete-upload` o un worker simple si hace falta.
 
 ## Fuentes consultadas
 
