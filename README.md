@@ -7,19 +7,21 @@ Secure project profiles and document management API.
 - Python 3.12+
 - FastAPI
 - PostgreSQL
-- MinIO for local S3-compatible document storage
+- Local filesystem document storage
+- MinIO-backed S3-compatible document storage for local development
 - SQLAlchemy
 - Docker Compose
 - Pydantic v2
 - JWT authentication
+- S3 event handler for finalizing pending uploads
 - pytest
 - httpx
 - Ruff
 
 ## Planned / Roadmap
 
-- AWS S3
-- AWS Lambda
+- AWS S3 deployment configuration
+- AWS Lambda deployment wiring
 - GitHub Actions / GitLab CI
 - Alembic migration workflow using `alembic/versions/`
 
@@ -60,14 +62,20 @@ Open:
 http://localhost:8000/docs
 ```
 
-Uploaded documents are stored locally under `DOCUMENT_STORAGE_PATH`, which
-defaults to `storage/documents` for local development.
+By default, uploaded documents are stored on the local filesystem under
+`DOCUMENT_STORAGE_PATH`, which defaults to `storage/documents`.
 
 Each project has a configurable storage limit through
 `PROJECT_STORAGE_LIMIT_BYTES`, defaulting to `104857600` bytes.
 
-To use the Phase 5 S3-compatible document flow against local MinIO, set this in
-`.env` before starting Docker Compose:
+The API also includes an S3-compatible document flow for local MinIO:
+
+- `POST /projects/{project_id}/documents/presign-upload`
+- `POST /projects/{project_id}/documents/complete-upload`
+- `GET /documents/{document_id}/download-url`
+
+To use that flow against local MinIO, set this in `.env` before starting Docker
+Compose:
 
 ```env
 DOCUMENT_STORAGE_BACKEND=s3
@@ -84,16 +92,15 @@ Validate the local event-driven flow with:
 ./scripts/s3-event-smoke-test.sh
 ```
 
-This script uploads to MinIO through a presigned URL, simulates an S3
-object-created event, runs the Lambda handler inside the API container, and
-verifies that metadata is finalized without calling `complete-upload`.
+This script uploads to MinIO through a presigned URL, simulates an
+S3-compatible object-created event, runs the event handler inside the API
+container, and verifies that metadata is finalized without calling
+`complete-upload`.
 
-AWS S3 object-created events can be processed by the Lambda handler at
-`app.lambda_handlers.s3_events.handler`. The handler imports the app code,
-reads object metadata through the S3 storage adapter, and updates PostgreSQL
-directly. Configure the Lambda environment with `DATABASE_URL`,
-`DOCUMENT_STORAGE_BACKEND=s3`, `S3_BUCKET`, `S3_REGION`, and credentials or an
-IAM role that can read/delete objects from the bucket.
+The event handler lives at `app.lambda_handlers.s3_events.handler`. It imports
+the app code, reads object metadata through the S3 storage adapter, and updates
+PostgreSQL directly. The handler is ready for AWS Lambda-style invocation, but
+AWS deployment wiring remains roadmap work.
 
 ### 5. Seed sample data
 
@@ -145,7 +152,7 @@ app/
   services/         Business logic
   repositories/     Database access logic
 alembic/
-  versions/         Future Alembic migration scripts
+  versions/         Placeholder for future Alembic migration scripts
 db/
   init/             PostgreSQL bootstrap SQL
 tests/              Automated tests
