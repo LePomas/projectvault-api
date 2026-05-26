@@ -56,3 +56,37 @@ def test_s3_presigned_urls_are_signed_with_public_endpoint(
         "http://localhost:9000/projectvault-documents/projects/7/example.pdf"
         "?operation=get_object&expires=900"
     )
+
+
+def test_s3_blank_endpoint_urls_use_default_aws_endpoint(monkeypatch) -> None:
+    created_endpoints: list[str | None] = []
+
+    def fake_create_client(
+        *,
+        endpoint_url: str | None,
+        access_key: str | None,
+        secret_key: str | None,
+        region: str,
+    ) -> FakeS3Client:
+        created_endpoints.append(endpoint_url)
+        return FakeS3Client(endpoint_url)
+
+    monkeypatch.setattr(
+        S3DocumentStorage,
+        "_create_client",
+        staticmethod(fake_create_client),
+    )
+
+    storage = S3DocumentStorage(
+        bucket="projectvault-documents",
+        endpoint_url="",
+        public_endpoint_url="",
+        access_key="projectvault",
+        secret_key="projectvault-secret",
+        region="us-east-1",
+        expires_in=900,
+    )
+
+    assert storage.endpoint_url is None
+    assert storage.public_endpoint_url is None
+    assert created_endpoints == [None]
