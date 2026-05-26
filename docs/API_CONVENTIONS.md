@@ -6,7 +6,7 @@ Local:
 
 ```text
 http://localhost:8000
-````
+```
 
 ## Response format
 

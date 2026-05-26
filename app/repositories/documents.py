@@ -82,6 +82,7 @@ class DocumentRepository:
                 ProjectMember.user_id == user_id,
                 Project.deleted_at.is_(None),
                 Document.deleted_at.is_(None),
+                Document.status == "uploaded",
             )
             .order_by(Document.created_at.desc(), Document.id.desc())
         )
@@ -101,6 +102,7 @@ class DocumentRepository:
                 ProjectMember.user_id == user_id,
                 Project.deleted_at.is_(None),
                 Document.deleted_at.is_(None),
+                Document.status == "uploaded",
             )
         )
         return self.db.scalar(statement)
