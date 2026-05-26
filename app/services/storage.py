@@ -138,11 +138,13 @@ class S3DocumentStorage:
         presign_client: object | None = None,
     ) -> None:
         self.bucket = bucket or settings.s3_bucket
-        self.endpoint_url = endpoint_url or settings.s3_endpoint_url
+        self.endpoint_url = self._blank_to_none(
+            endpoint_url or settings.s3_endpoint_url
+        )
         self.public_endpoint_url = (
-            public_endpoint_url
+            self._blank_to_none(public_endpoint_url)
             if public_endpoint_url is not None
-            else settings.s3_public_endpoint_url
+            else self._blank_to_none(settings.s3_public_endpoint_url)
         )
         self.expires_in = expires_in or settings.s3_presigned_url_expires_seconds
         access_key = access_key or settings.s3_access_key
@@ -304,6 +306,12 @@ class S3DocumentStorage:
                 message="Document storage key is invalid.",
             )
         return storage_key
+
+    @staticmethod
+    def _blank_to_none(value: str | None) -> str | None:
+        if value == "":
+            return None
+        return value
 
     @staticmethod
     def _storage_error(message: str) -> AppError:
