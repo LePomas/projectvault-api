@@ -139,7 +139,7 @@ class S3DocumentStorage:
     ) -> None:
         self.bucket = bucket or settings.s3_bucket
         self.endpoint_url = self._blank_to_none(
-            endpoint_url or settings.s3_endpoint_url
+            endpoint_url if endpoint_url is not None else settings.s3_endpoint_url
         )
         self.public_endpoint_url = (
             self._blank_to_none(public_endpoint_url)
