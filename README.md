@@ -63,6 +63,9 @@ http://localhost:8000/docs
 Uploaded documents are stored locally under `DOCUMENT_STORAGE_PATH`, which
 defaults to `storage/documents` for local development.
 
+Each project has a configurable storage limit through
+`PROJECT_STORAGE_LIMIT_BYTES`, defaulting to `104857600` bytes.
+
 To use the Phase 5 S3-compatible document flow against local MinIO, set this in
 `.env` before starting Docker Compose:
 
@@ -74,6 +77,23 @@ Docker Compose starts MinIO on `http://localhost:9000` and the MinIO console on
 `http://localhost:9001`. The bucket-init container creates the configured
 `S3_BUCKET` automatically. The API uses `S3_ENDPOINT_URL` inside Docker and
 rewrites presigned URLs to `S3_PUBLIC_ENDPOINT_URL` for host-side clients.
+
+Validate the local event-driven flow with:
+
+```bash
+./scripts/s3-event-smoke-test.sh
+```
+
+This script uploads to MinIO through a presigned URL, simulates an S3
+object-created event, runs the Lambda handler inside the API container, and
+verifies that metadata is finalized without calling `complete-upload`.
+
+AWS S3 object-created events can be processed by the Lambda handler at
+`app.lambda_handlers.s3_events.handler`. The handler imports the app code,
+reads object metadata through the S3 storage adapter, and updates PostgreSQL
+directly. Configure the Lambda environment with `DATABASE_URL`,
+`DOCUMENT_STORAGE_BACKEND=s3`, `S3_BUCKET`, `S3_REGION`, and credentials or an
+IAM role that can read/delete objects from the bucket.
 
 ### 5. Seed sample data
 

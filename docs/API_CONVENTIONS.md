@@ -89,6 +89,9 @@ Supported file types:
 .docx application/vnd.openxmlformats-officedocument.wordprocessingml.document
 ```
 
+Projects have a configurable storage limit. Uploads that would exceed
+`PROJECT_STORAGE_LIMIT_BYTES` return `413 PROJECT_STORAGE_LIMIT_EXCEEDED`.
+
 `GET /documents/{document_id}` returns JSON metadata.
 
 Rename a document:
@@ -133,13 +136,16 @@ Content-Type: application/json
 ```json
 {
   "filename": "contract.pdf",
-  "content_type": "application/pdf"
+  "content_type": "application/pdf",
+  "size_bytes": 1234
 }
 ```
 
 The response creates document metadata with `status="pending_upload"` and
 returns a presigned PUT URL plus required upload headers. Pending uploads do not
-increment project document totals.
+increment project document totals. `size_bytes` is optional; when provided, the
+backend rejects the presign request before issuing an upload URL if the object
+would exceed the project storage limit.
 
 Complete an upload after the client PUTs the object:
 
@@ -155,8 +161,21 @@ Content-Type: application/json
 ```
 
 The backend verifies the object in storage, reads its size, marks the document
-as `uploaded`, and updates project document totals. Repeating completion for an
-already uploaded document is idempotent.
+as `uploaded`, and updates project document totals. If the verified object would
+exceed the project storage limit, the backend deletes the uploaded object,
+marks the pending metadata as deleted, and returns
+`413 PROJECT_STORAGE_LIMIT_EXCEEDED`. Repeating completion for an already
+uploaded document is idempotent.
+
+In AWS deployments, S3 object-created events can finalize the same pending
+upload through `app.lambda_handlers.s3_events.handler`. The Lambda path looks up
+the pending document by `storage_key` and applies the same metadata, total-size,
+idempotency, and storage-limit rules as `complete-upload`.
+
+For local MinIO validation, `scripts/s3-event-smoke-test.sh` simulates the S3
+event JSON and runs the handler inside the API container. This validates the
+event finalization path locally without configuring AWS or MinIO bucket
+notifications.
 
 Get a presigned download URL:
 

@@ -2,7 +2,7 @@
 title: "ProjectVault - Roadmap"
 version: "1.0"
 language: "es-MX"
-last_updated: "2026-05-21"
+last_updated: "2026-05-26"
 purpose: "Fases, prioridades, MVP, backlog y checklist de entrega para ProjectVault."
 ---
 
@@ -13,24 +13,24 @@ purpose: "Fases, prioridades, MVP, backlog y checklist de entrega para ProjectVa
 
 ## Roadmap de desarrollo
 
-Fecha de inicio sugerida: **martes 5 de mayo de 2026**  
-Entrega final sugerida: **viernes 26 de junio de 2026**  
-Duracion: **8 semanas**
+Fecha de inicio sugerida: **miercoles 29 de abril de 2026**
+Entrega final sugerida: **jueves 18 de junio de 2026**
+Duracion: **7 semanas y 2 dias**
 
 | Fase | Fechas | Scope | Entregable |
 |---|---|---|---|
-| 0 | May 5-May 8 | Diseno tecnico y setup | Repo, arquitectura, DB draft, Docker local |
-| 1 | May 11-May 15 | Auth + usuarios | Registro, login, JWT |
-| 2 | May 18-May 22 | CRUD de proyectos | Crear, listar, ver, editar, borrar proyectos |
-| 3 | May 25-May 29 | Permisos e invitaciones | Owner/participant, invite by login |
-| 4 | Jun 1-Jun 5 | Documentos local/S3-ready | Upload, list, download, update, delete documents |
-| 5 | Jun 8-Jun 12 | S3 + Lambda | Presigned URLs, S3 events, size calculation |
-| 6 | Jun 15-Jun 19 | Tests + CI/CD | pytest, linting, Docker image, CI pipeline |
-| 7 | Jun 22-Jun 26 | Deployment + hardening | AWS/on-prem deploy, docs, final demo |
+| 0 | 2026-04-29-2026-05-01 | Diseno tecnico y setup | Repo, arquitectura, DB draft, Docker local |
+| 1 | 2026-05-04-2026-05-08 | Auth + usuarios | Registro, login, JWT |
+| 2 | 2026-05-11-2026-05-15 | CRUD de proyectos | Crear, listar, ver, editar, borrar proyectos |
+| 3 | 2026-05-18-2026-05-22 | Permisos e invitaciones | Owner/participant, invite by login |
+| 4 | 2026-05-25-2026-05-29 | Documentos local/S3-ready | Upload, list, download, update, delete |
+| 5 | 2026-06-01-2026-06-05 | S3 + Lambda | Presigned URLs, S3 events, size calculation |
+| 6 | 2026-06-08-2026-06-12 | Tests + CI/CD | pytest, linting, Docker image, CI pipeline |
+| 7 | 2026-06-15-2026-06-18 | Deployment + hardening | AWS/on-prem deploy, docs, final demo |
 
 ## Fase 0 - Setup y diseno tecnico
 
-Fechas: **May 5-May 8**
+Fechas: **2026-04-29-2026-05-01**
 
 ### Objetivo
 
@@ -77,7 +77,7 @@ repo/
 
 ## Fase 1 - Auth y usuarios
 
-Fechas: **May 11-May 15**
+Fechas: **2026-05-04-2026-05-08**
 
 ### Objetivo
 
@@ -118,7 +118,7 @@ GET  /auth/me
 
 ## Fase 2 - CRUD de proyectos
 
-Fechas: **May 18-May 22**
+Fechas: **2026-05-11-2026-05-15**
 
 ### Objetivo
 
@@ -158,7 +158,7 @@ DELETE /projects/{project_id}
 
 ## Fase 3 - Roles, permisos e invitaciones
 
-Fechas: **May 25-May 29**
+Fechas: **2026-05-18-2026-05-22**
 
 ### Objetivo
 
@@ -208,7 +208,7 @@ Tambien se puede invitar a otro owner:
 
 ## Fase 4 - Documentos local/S3-ready
 
-Fechas: **Jun 1-Jun 5**
+Fechas: **2026-05-25-2026-05-29**
 
 ### Objetivo
 
@@ -248,12 +248,13 @@ DELETE /documents/{document_id}
 - Implementado: ejemplos Phase 4 en `requests.http`.
 - Implementado: MinIO local como backend S3-compatible para desarrollo.
 - Implementado: URLs presignadas de upload/download y `complete-upload` local.
-- Pendiente: Lambda/eventos AWS.
-- Pendiente: limites de almacenamiento por proyecto.
+- Implementado: limite configurable de almacenamiento por proyecto.
+- Implementado: Lambda handler para procesar eventos S3 object-created.
+- Implementado: smoke test local de eventos S3 simulados contra MinIO.
 
 ## Fase 5 - S3 + Lambda + limites de almacenamiento
 
-Fechas: **Jun 8-Jun 12**
+Fechas: **2026-06-01-2026-06-05**
 
 ### Objetivo
 
@@ -286,19 +287,20 @@ GET  /documents/{document_id}/download-url
 - S3 funcional.
 - MinIO local funcional.
 - Metadata actualizada desde `complete-upload` local.
-- Lambda funcional.
 - Limite de tamano por proyecto.
+- Lambda funcional.
+- Smoke test local de eventos S3 simulados.
 
 ### Definition of Done
 
-- Un archivo subido a S3 genera evento.
-- Lambda procesa evento.
+- Un archivo subido a S3 genera evento o evento simulado local.
+- Lambda procesa evento real o simulado local.
 - DB refleja tamano actualizado.
 - Proyecto rechaza nuevos uploads si supera limite.
 
 ## Fase 6 - Testing, calidad y CI/CD
 
-Fechas: **Jun 15-Jun 19**
+Fechas: **2026-06-08-2026-06-12**
 
 ### Objetivo
 
@@ -348,7 +350,7 @@ on merge to main:
 
 ## Fase 7 - Deployment, documentacion y demo final
 
-Fechas: **Jun 22-Jun 26**
+Fechas: **2026-06-15-2026-06-18**
 
 ### Objetivo
 
@@ -396,7 +398,7 @@ Cerrar el proyecto como entrega presentable.
 
 ### MVP obligatorio
 
-Debe estar listo maximo el **viernes 5 de junio de 2026**.
+Debe estar listo maximo el **viernes 29 de mayo de 2026**.
 
 ```text
 - Register/login
@@ -412,7 +414,7 @@ Debe estar listo maximo el **viernes 5 de junio de 2026**.
 
 ### Scope cloud obligatorio
 
-Debe estar listo maximo el **viernes 12 de junio de 2026**.
+Debe estar listo maximo el **viernes 5 de junio de 2026**.
 
 ```text
 - S3 storage
@@ -424,7 +426,7 @@ Debe estar listo maximo el **viernes 12 de junio de 2026**.
 
 ### Scope profesional
 
-Debe estar listo maximo el **viernes 19 de junio de 2026**.
+Debe estar listo maximo el **viernes 12 de junio de 2026**.
 
 ```text
 - CI pipeline
