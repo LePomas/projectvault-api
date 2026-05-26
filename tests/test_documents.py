@@ -345,6 +345,46 @@ async def test_download_missing_storage_file_returns_storage_error(
     assert response.json()["error"]["code"] == "DOCUMENT_STORAGE_ERROR"
 
 
+async def test_local_upload_rejects_project_storage_limit(
+    client: AsyncClient,
+    db_session: Session,
+    document_storage_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "project_storage_limit_bytes", 16)
+    token = await register_and_login(client, "owner", "owner@example.com")
+    project = await create_project(client, token)
+    first_document = await upload_pdf(
+        client,
+        token,
+        project["id"],
+        filename="first.pdf",
+        content=b"0123456789",
+    )
+
+    response = await client.post(
+        f"/projects/{project['id']}/documents",
+        headers=bearer(token),
+        files={"file": ("second.pdf", b"abcdefg", "application/pdf")},
+    )
+
+    assert response.status_code == 413
+    assert response.json()["error"]["code"] == "PROJECT_STORAGE_LIMIT_EXCEEDED"
+    assert response.json()["error"]["details"] == {
+        "limit_bytes": 16,
+        "current_size_bytes": 10,
+        "requested_size_bytes": 7,
+    }
+    assert stored_file(document_storage_path, first_document["storage_key"]).exists()
+
+    db_session.expire_all()
+    saved_project = db_session.get(Project, project["id"])
+    assert saved_project is not None
+    assert saved_project.documents_count == 1
+    assert saved_project.total_size_bytes == 10
+    assert db_session.query(Document).count() == 1
+
+
 async def test_presigned_upload_complete_and_download_url_update_document_totals(
     client: AsyncClient,
     db_session: Session,
@@ -404,6 +444,79 @@ async def test_presigned_upload_complete_and_download_url_update_document_totals
     assert completed_project is not None
     assert completed_project.documents_count == 1
     assert completed_project.total_size_bytes == 1234
+
+
+async def test_presigned_upload_rejects_project_storage_limit_preflight(
+    client: AsyncClient,
+    db_session: Session,
+    fake_s3_storage: FakeS3Storage,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "project_storage_limit_bytes", 5)
+    token = await register_and_login(client, "owner", "owner@example.com")
+    project = await create_project(client, token)
+
+    response = await client.post(
+        f"/projects/{project['id']}/documents/presign-upload",
+        headers=bearer(token),
+        json={
+            "filename": "contract.pdf",
+            "content_type": "application/pdf",
+            "size_bytes": 6,
+        },
+    )
+
+    assert response.status_code == 413
+    assert response.json()["error"]["code"] == "PROJECT_STORAGE_LIMIT_EXCEEDED"
+    assert response.json()["error"]["details"] == {
+        "limit_bytes": 5,
+        "current_size_bytes": 0,
+        "requested_size_bytes": 6,
+    }
+    assert fake_s3_storage.objects == {}
+    assert db_session.query(Document).count() == 0
+
+
+async def test_complete_upload_rejects_project_storage_limit_and_deletes_object(
+    client: AsyncClient,
+    db_session: Session,
+    fake_s3_storage: FakeS3Storage,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "project_storage_limit_bytes", 5)
+    token = await register_and_login(client, "owner", "owner@example.com")
+    project = await create_project(client, token)
+    presign_response = await client.post(
+        f"/projects/{project['id']}/documents/presign-upload",
+        headers=bearer(token),
+        json={"filename": "contract.pdf", "content_type": "application/pdf"},
+    )
+    assert presign_response.status_code == 201
+    body = presign_response.json()
+    fake_s3_storage.objects[body["storage_key"]] = StoredObjectMetadata(
+        size_bytes=6,
+        content_type="application/pdf",
+    )
+
+    response = await client.post(
+        f"/projects/{project['id']}/documents/complete-upload",
+        headers=bearer(token),
+        json={"document_id": body["document_id"]},
+    )
+
+    assert response.status_code == 413
+    assert response.json()["error"]["code"] == "PROJECT_STORAGE_LIMIT_EXCEEDED"
+    assert fake_s3_storage.deleted_keys == [body["storage_key"]]
+
+    db_session.expire_all()
+    saved_project = db_session.get(Project, project["id"])
+    rejected_document = db_session.get(Document, body["document_id"])
+    assert saved_project is not None
+    assert rejected_document is not None
+    assert saved_project.documents_count == 0
+    assert saved_project.total_size_bytes == 0
+    assert rejected_document.status == "deleted"
+    assert rejected_document.deleted_at is not None
 
 
 async def test_complete_upload_requires_existing_s3_object(
