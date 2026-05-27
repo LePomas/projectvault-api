@@ -93,6 +93,7 @@ async def presign_document_upload(
 @router.post(
     "/projects/{project_id}/documents/complete-upload",
     response_model=DocumentRead,
+    status_code=status.HTTP_201_CREATED,
 )
 async def complete_document_upload(
     project_id: int,

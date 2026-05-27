@@ -77,7 +77,7 @@ async def add_participant(
         headers=bearer(participant_token),
         json={"token": invite_response.json()["token"]},
     )
-    assert accept_response.status_code == 200
+    assert accept_response.status_code == 201
 
 
 async def upload_pdf(
@@ -432,10 +432,10 @@ async def test_presigned_upload_complete_and_download_url_update_document_totals
         headers=bearer(token),
     )
 
-    assert complete_response.status_code == 200
+    assert complete_response.status_code == 201
     assert complete_response.json()["status"] == "uploaded"
     assert complete_response.json()["size_bytes"] == 1234
-    assert second_complete_response.status_code == 200
+    assert second_complete_response.status_code == 201
     assert download_url_response.status_code == 200
     assert download_url_response.json()["download_url"].endswith("?download")
 
