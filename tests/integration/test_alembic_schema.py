@@ -3,7 +3,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+import pytest
+
+pytestmark = pytest.mark.integration
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_alembic_initial_schema_renders_current_postgresql_baseline() -> None:

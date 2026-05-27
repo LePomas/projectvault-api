@@ -7,7 +7,7 @@ from app.core.config import settings
 from app.core.security import create_access_token
 from app.models.user import User
 
-pytestmark = pytest.mark.anyio
+pytestmark = [pytest.mark.integration, pytest.mark.anyio]
 
 
 async def register_user(

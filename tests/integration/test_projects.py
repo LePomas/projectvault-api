@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models.project import Project, ProjectInvite, ProjectMember
 
-pytestmark = pytest.mark.anyio
+pytestmark = [pytest.mark.integration, pytest.mark.anyio]
 
 
 async def register_and_login(

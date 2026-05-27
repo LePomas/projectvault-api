@@ -10,7 +10,7 @@ from app.models.document import Document
 from app.models.project import Project
 from app.services.storage import PresignedUrl, StoredObjectMetadata
 
-pytestmark = pytest.mark.anyio
+pytestmark = [pytest.mark.integration, pytest.mark.anyio]
 
 
 @pytest.fixture(autouse=True)

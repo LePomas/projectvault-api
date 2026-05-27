@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.services.storage import PresignedUrl, StoredObjectMetadata
 
-pytestmark = pytest.mark.anyio
+pytestmark = [pytest.mark.integration, pytest.mark.anyio]
 
 
 class FakeS3Storage:

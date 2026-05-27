@@ -1,5 +1,9 @@
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_compose_allows_blank_s3_endpoint_values_for_aws() -> None:
     compose = Path("docker-compose.yml").read_text()

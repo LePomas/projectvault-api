@@ -1,4 +1,8 @@
+import pytest
+
 from app.services.storage import S3DocumentStorage
+
+pytestmark = pytest.mark.unit
 
 
 class FakeS3Client:

@@ -21,6 +21,27 @@ TEST_TABLES = [
     Document.__table__,
     ProjectInvite.__table__,
 ]
+TEST_LEVEL_MARKERS = {"unit", "integration", "e2e"}
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    errors = []
+    for item in items:
+        selected_markers = [
+            marker
+            for marker in TEST_LEVEL_MARKERS
+            if item.get_closest_marker(marker) is not None
+        ]
+        if len(selected_markers) != 1:
+            markers = ", ".join(sorted(selected_markers)) or "none"
+            errors.append(f"{item.nodeid}: {markers}")
+
+    if errors:
+        message = (
+            "Each test must have exactly one test level marker: "
+            "unit, integration, or e2e.\n"
+        )
+        raise pytest.UsageError(message + "\n".join(errors))
 
 
 @pytest.fixture

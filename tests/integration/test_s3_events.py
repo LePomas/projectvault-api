@@ -11,6 +11,8 @@ from app.models.project import Project, ProjectMember
 from app.models.user import User
 from app.services.storage import StoredObjectMetadata
 
+pytestmark = pytest.mark.integration
+
 
 class FakeS3Storage:
     def __init__(self) -> None:

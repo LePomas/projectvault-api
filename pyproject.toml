@@ -34,3 +34,8 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+    "unit: pure helper and configuration tests with no app/database/process boundary",
+    "integration: in-process API, database, service, script, and handler tests",
+    "e2e: live Docker Compose smoke tests, skipped unless explicitly enabled",
+]

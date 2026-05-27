@@ -2,9 +2,13 @@ import os
 import subprocess
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = REPO_ROOT / "scripts" / "s3-event-smoke-test.sh"
-STALE_RESPONSE_FILE = Path("/tmp/projectvault-event-smoke-response.json")
+import pytest
+
+pytestmark = pytest.mark.integration
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = REPO_ROOT / "scripts" / "s3-smoke-test.sh"
+STALE_RESPONSE_FILE = Path("/tmp/projectvault-smoke-response.json")
 
 
 FAKE_CURL = r"""#!/usr/bin/env python3
@@ -49,14 +53,14 @@ if MODE == "connection_failure":
 if "/auth/register" in url:
     write_response(
         output_file,
-        '{"id":1,"login":"s3eventsmoke-test","email":"s3eventsmoke-test@example.com"}',
+        '{"id":1,"login":"s3smoke-test","email":"s3smoke-test@example.com"}',
     )
     print("201", end="")
 elif "/auth/login" in url:
     write_response(output_file, '{"access_token":"test-token"}')
     print("200", end="")
 elif url.endswith("/projects"):
-    write_response(output_file, '{"id":1,"name":"S3 Event Smoke Test"}')
+    write_response(output_file, '{"id":1,"name":"S3 Smoke Test"}')
     print("201", end="")
 elif "/projects/1/documents/presign-upload" in url:
     if MODE == "presign_error":
@@ -66,17 +70,17 @@ elif "/projects/1/documents/presign-upload" in url:
         write_response(
             output_file,
             '{"document_id":1,'
-            '"storage_key":"projects/1/event-smoke.pdf",'
+            '"storage_key":"projects/1/smoke.pdf",'
             '"upload_url":"https://projectvault-documents.s3.amazonaws.com/upload",'
             '"headers":{"Content-Type":"application/pdf"},'
             '"expires_in":900}',
         )
         print("201", end="")
-elif "/projects/1/documents/complete-upload" in url:
-    write_response(output_file, "complete-upload should not be called")
-    print("500", end="")
 elif url == "https://projectvault-documents.s3.amazonaws.com/upload":
     write_response(output_file, "")
+    print("200", end="")
+elif "/projects/1/documents/complete-upload" in url:
+    write_response(output_file, '{"id":1,"status":"uploaded","size_bytes":20}')
     print("200", end="")
 elif "/documents/1/download-url" in url:
     write_response(
@@ -85,68 +89,24 @@ elif "/documents/1/download-url" in url:
         '"expires_in":900}',
     )
     print("200", end="")
-elif "/documents/1" in url:
-    write_response(
-        output_file,
-        '{"id":1,"status":"uploaded","size_bytes":26,'
-        '"storage_key":"projects/1/event-smoke.pdf"}',
-    )
-    print("200", end="")
 elif url == "https://projectvault-documents.s3.amazonaws.com/download":
-    print("%PDF-1.7 event smoke test", end="")
+    print("%PDF-1.7 smoke test", end="")
 else:
     write_response(output_file, "Not Found")
     print("404", end="")
 """
 
 
-FAKE_DOCKER = r"""#!/usr/bin/env python3
-import os
-import sys
-
-MODE = os.environ.get("FAKE_DOCKER_MODE", "success")
-
-if MODE == "handler_error":
-    print("S3EventProcessingError: simulated failure", file=sys.stderr)
-    sys.exit(1)
-
-if "compose" in sys.argv and "exec" in sys.argv:
-    print(
-        '{"processed":1,"skipped":0,"failed":0,'
-        '"results":[{"bucket":"projectvault-documents",'
-        '"storage_key":"projects/1/event-smoke.pdf","status":"uploaded",'
-        '"document_id":1,"reason":null,"size_bytes":26}],'
-        '"failures":[]}',
-        end="",
-    )
-    sys.exit(0)
-
-print("unexpected docker invocation: " + " ".join(sys.argv), file=sys.stderr)
-sys.exit(1)
-"""
-
-
-def run_smoke_script(
-    tmp_path: Path,
-    *,
-    curl_mode: str = "success",
-    docker_mode: str = "success",
-):
+def run_smoke_script(tmp_path: Path, *, mode: str = "success"):
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()
-
     fake_curl = fake_bin / "curl"
     fake_curl.write_text(FAKE_CURL)
     fake_curl.chmod(0o755)
 
-    fake_docker = fake_bin / "docker"
-    fake_docker.write_text(FAKE_DOCKER)
-    fake_docker.chmod(0o755)
-
     env = os.environ.copy()
     env["BASE"] = "http://testserver"
-    env["FAKE_CURL_MODE"] = curl_mode
-    env["FAKE_DOCKER_MODE"] = docker_mode
+    env["FAKE_CURL_MODE"] = mode
     env["PATH"] = f"{fake_bin}:{env['PATH']}"
 
     return subprocess.run(
@@ -160,18 +120,18 @@ def run_smoke_script(
     )
 
 
-def test_s3_event_smoke_script_passes_without_complete_upload(tmp_path: Path) -> None:
+def test_s3_smoke_script_passes_against_presigned_flow(tmp_path: Path) -> None:
     result = run_smoke_script(tmp_path)
 
     assert result.returncode == 0
-    assert "Processing simulated S3 object-created event" in result.stdout
-    assert "S3 event smoke test passed." in result.stdout
-    assert "/complete-upload" not in result.stderr
-    assert "complete-upload should not be called" not in result.stderr
+    assert "S3 smoke test passed." in result.stdout
+    assert "https://projectvault-documents.s3.amazonaws.com/upload" in result.stdout
 
 
-def test_s3_event_smoke_script_reports_presign_errors(tmp_path: Path) -> None:
-    result = run_smoke_script(tmp_path, curl_mode="presign_error")
+def test_s3_smoke_script_reports_non_json_api_errors_without_jq_parse_error(
+    tmp_path: Path,
+) -> None:
+    result = run_smoke_script(tmp_path, mode="presign_error")
 
     assert result.returncode == 1
     assert (
@@ -182,19 +142,12 @@ def test_s3_event_smoke_script_reports_presign_errors(tmp_path: Path) -> None:
     assert "jq: parse error" not in result.stderr
 
 
-def test_s3_event_smoke_script_reports_handler_failures(tmp_path: Path) -> None:
-    result = run_smoke_script(tmp_path, docker_mode="handler_error")
-
-    assert result.returncode == 1
-    assert "S3EventProcessingError: simulated failure" in result.stderr
-
-
-def test_s3_event_smoke_script_does_not_print_stale_response_after_connection_failure(
+def test_s3_smoke_script_does_not_print_stale_response_after_connection_failure(
     tmp_path: Path,
 ) -> None:
     STALE_RESPONSE_FILE.write_text('{"download_url":"http://localhost:9000/stale"}')
 
-    result = run_smoke_script(tmp_path, curl_mode="connection_failure")
+    result = run_smoke_script(tmp_path, mode="connection_failure")
 
     assert result.returncode == 1
     assert "could not connect" in result.stderr

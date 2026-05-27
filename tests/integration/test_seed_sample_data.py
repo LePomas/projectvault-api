@@ -2,6 +2,7 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,10 +10,12 @@ from app.models.document import Document
 from app.models.project import Project, ProjectInvite, ProjectMember
 from app.models.user import User
 
+pytestmark = pytest.mark.integration
+
 
 def load_seed_module():
     script_path = (
-        Path(__file__).resolve().parents[1] / "scripts" / "seed-sample-data.py"
+        Path(__file__).resolve().parents[2] / "scripts" / "seed-sample-data.py"
     )
     spec = importlib.util.spec_from_file_location("seed_sample_data", script_path)
     assert spec is not None
