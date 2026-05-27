@@ -10,6 +10,10 @@ purpose: "Arquitectura objetivo, stack recomendado, storage y deployment futuro 
 
 > Este documento describe arquitectura objetivo. No asumir que S3, Lambda,
 > Alembic, CI/CD o deployment cloud estan implementados sin verificar el codigo.
+> Estado actual verificado: CI de GitHub Actions existe para lint, format check,
+> tests y `docker compose config`; Alembic tiene baseline inicial; MinIO local,
+> adaptador S3-compatible y handler estilo Lambda existen; deployment AWS,
+> infraestructura cloud y wiring real de Lambda siguen pendientes.
 
 ## Stack recomendado
 
@@ -31,7 +35,7 @@ purpose: "Arquitectura objetivo, stack recomendado, storage y deployment futuro 
 | Testing | pytest |
 | Calidad | Ruff, optional mypy |
 | Packaging | uv or Poetry |
-| CI/CD | GitHub Actions or GitLab CI |
+| CI/CD | GitHub Actions |
 
 ### Alternativas aceptables
 
@@ -202,7 +206,10 @@ Client → presigned URL → S3
 S3 event → Lambda → update document metadata / project total size
 
 CI/CD:
-GitHub Actions → tests/lint → build Docker image → push registry → deploy
+GitHub Actions → tests/lint/format check → Compose config validation
+
+Target production CI/CD still pending:
+build Docker image → push registry → deploy
 ```
 
 ### Servicios AWS sugeridos
@@ -216,7 +223,7 @@ GitHub Actions → tests/lint → build Docker image → push registry → deplo
 | Secrets | AWS Secrets Manager or SSM Parameter Store |
 | Container registry | ECR or GitHub Container Registry |
 | Logs | CloudWatch |
-| CI/CD | GitHub Actions or GitLab CI |
+| CI/CD | GitHub Actions |
 
 ## Arquitectura on-premise recomendada
 

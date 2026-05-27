@@ -42,14 +42,18 @@ Abrir solo el documento necesario para la tarea:
 ## Current vs target
 
 ProjectVault ya tiene una base FastAPI con SQLAlchemy, JWT, PostgreSQL en
-Docker Compose y pruebas con SQLite en memoria. Para confirmar que algo existe,
-revisar el código y `README.md`; este plan puede mencionar fases futuras o
-opciones no implementadas.
+Docker Compose, pruebas con SQLite en memoria, CI de GitHub Actions y un
+baseline inicial de Alembic. Para confirmar que algo existe, revisar el código
+y `README.md`; este plan puede mencionar fases futuras u opciones no
+implementadas.
 
 Algunas capacidades en los documentos divididos son objetivo o roadmap, no
 garantía de implementación actual. En particular, no asumir que existen S3,
 Lambda, CI/CD, Alembic, deployment cloud o features opcionales hasta verificarlo
-en el código.
+en el código. El estado actual verificado es: MinIO/S3-compatible local y un
+handler estilo Lambda existen; GitHub Actions CI existe; Alembic tiene baseline
+inicial; deployment cloud, wiring real de AWS y migraciones posteriores al
+baseline siguen pendientes.
 
 ## Documentos divididos
 
@@ -119,6 +123,8 @@ este índice estable salvo que cambien las rutas de lectura.
 |---|---|
 | Código ejecutable | `app/`, `tests/`, `db/init/001_initial_schema.sql` |
 | Setup local | `README.md` |
+| CI actual | `.github/workflows/ci.yml` |
+| Migraciones | `alembic/versions/`, `db/init/001_initial_schema.sql` |
 | Reglas de agentes | `AGENTS.md` |
 | API y errores | `docs/API_CONVENTIONS.md` |
 | Esquema actual documentado | `docs/ERD.md` |

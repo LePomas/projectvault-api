@@ -318,12 +318,15 @@ Que el proyecto se vea profesional y confiable.
 
 ### Calidad
 
-- Ruff lint.
-- Ruff format.
+- Implementado: Ruff lint en CI.
+- Implementado: Ruff format check en CI.
+- Implementado: pytest en CI.
+- Implementado: `docker compose config` en CI.
 - mypy opcional.
 - Coverage report.
-- Alembic migrations.
-- CI en pull request.
+- Implementado: Alembic baseline inicial.
+- Pendiente: migraciones posteriores al baseline.
+- Implementado: CI en pull request para ramas `main` y `develop`.
 
 ### Pipeline minimo
 
@@ -333,20 +336,20 @@ on pull request:
   - lint
   - format check
   - run tests
-  - build Docker image
+  - validate Docker Compose config
 
 on merge to main:
-  - build image
-  - push image
-  - deploy
+  - pending: build image
+  - pending: push image
+  - pending: deploy
 ```
 
 ### Entregables
 
-- GitHub Actions o GitLab CI funcional.
-- Docker image publicada.
-- Tests automaticos.
-- Badge en README.
+- Implementado: GitHub Actions CI funcional.
+- Implementado: tests automaticos en CI.
+- Pendiente: Docker image publicada.
+- Pendiente: Badge en README.
 
 ## Fase 7 - Deployment, documentacion y demo final
 
@@ -358,12 +361,12 @@ Cerrar el proyecto como entrega presentable.
 
 ### Scope AWS
 
-- Deploy API.
-- Deploy DB.
-- Configurar variables de entorno.
-- Configurar bucket.
-- Configurar Lambda.
-- Configurar logs.
+- Pendiente: Deploy API.
+- Pendiente: Deploy DB.
+- Pendiente: Configurar variables de entorno.
+- Pendiente: Configurar bucket.
+- Pendiente: Configurar Lambda.
+- Pendiente: Configurar logs.
 - Crear usuario demo.
 - Probar flujo completo.
 
@@ -531,9 +534,10 @@ Antes de presentar el proyecto, verificar:
 [ ] S3/presigned URL funciona si aplica
 [ ] Lambda actualiza size metadata si aplica
 [ ] tests pasan localmente
-[ ] CI corre lint + tests
+[ ] CI corre lint + format check + tests + Compose config
 [ ] README explica setup local
-[ ] README explica deployment
+[ ] README explica estado actual de deployment
+[ ] README explica deployment productivo
 [ ] ERD incluido
 [ ] demo script incluido
 ```

@@ -14,6 +14,8 @@ Secure project profiles and document management API.
 - Pydantic v2
 - JWT authentication
 - S3 event handler for finalizing pending uploads
+- Alembic initial schema baseline
+- GitHub Actions CI for lint, format check, tests, and Compose validation
 - pytest
 - httpx
 - Ruff
@@ -22,8 +24,9 @@ Secure project profiles and document management API.
 
 - AWS S3 deployment configuration
 - AWS Lambda deployment wiring
-- GitHub Actions / GitLab CI
-- Alembic migration workflow using `alembic/versions/`
+- Docker image publishing and deployment automation
+- Forward database migrations beyond the initial Alembic baseline
+- README deployment guide for AWS or self-hosted production
 
 ## Local development
 
@@ -140,6 +143,35 @@ diego / diego@example.com
 The script prints the current project/document IDs and the pending invite token
 for `diego` after each run.
 
+## Database schema
+
+Docker Compose initializes a fresh local PostgreSQL volume from
+`db/init/001_initial_schema.sql`.
+
+Alembic is configured with an initial baseline migration under
+`alembic/versions/`. For a database that was already initialized from
+`db/init/001_initial_schema.sql`, stamp the database to the initial revision
+before using future migrations so Alembic does not try to replay the baseline
+over existing tables.
+
+Forward migrations after the initial baseline are not yet in place. Until the
+next migration is added, keep ORM models, the bootstrap SQL, and the Alembic
+baseline aligned when changing the schema.
+
+## CI and deployment status
+
+GitHub Actions CI is configured in `.github/workflows/ci.yml`. It installs the
+Python dependencies, runs Ruff linting, Ruff format check, pytest, and
+`docker compose config`.
+
+CI does not currently build or publish a Docker image, deploy the API, provision
+cloud infrastructure, or configure AWS services.
+
+AWS deployment wiring remains roadmap work. The code includes an S3-compatible
+storage adapter and a Lambda-style event handler, but there is no tracked
+infrastructure, deployed Lambda configuration, RDS setup, production bucket
+configuration, registry publishing, or production deployment workflow.
+
 ## Project structure
 
 ```text
@@ -152,7 +184,7 @@ app/
   services/         Business logic
   repositories/     Database access logic
 alembic/
-  versions/         Placeholder for future Alembic migration scripts
+  versions/         Alembic migration scripts
 db/
   init/             PostgreSQL bootstrap SQL
 tests/              Automated tests
