@@ -143,6 +143,31 @@ diego / diego@example.com
 The script prints the current project/document IDs and the pending invite token
 for `diego` after each run.
 
+## Testing
+
+Tests are organized by pytest marker and directory:
+
+- `tests/unit/`: pure helper and configuration checks.
+- `tests/integration/`: in-process API, database, service, script, and handler
+  tests.
+- `tests/e2e/`: live Docker Compose smoke wrappers.
+
+Every test must have exactly one of `unit`, `integration`, or `e2e`; collection
+fails when a test is missing a level marker or has more than one.
+
+```bash
+.venv/bin/python -m pytest -m unit
+.venv/bin/python -m pytest -m integration
+.venv/bin/python -m pytest -m "unit or integration"
+```
+
+E2E tests wrap the local S3 smoke scripts and are skipped by default. They require
+`PROJECTVAULT_RUN_E2E=1` and an already-running S3-backed Docker Compose stack:
+
+```bash
+PROJECTVAULT_RUN_E2E=1 .venv/bin/python -m pytest -m e2e
+```
+
 ## Database schema
 
 Docker Compose initializes a fresh local PostgreSQL volume from
@@ -161,8 +186,10 @@ baseline aligned when changing the schema.
 ## CI and deployment status
 
 GitHub Actions CI is configured in `.github/workflows/ci.yml`. It installs the
-Python dependencies, runs Ruff linting, Ruff format check, pytest, and
-`docker compose config`.
+Python dependencies, runs Ruff linting, Ruff format check, unit tests,
+integration tests, and `docker compose config`.
+
+Live e2e smoke tests are not part of PR CI.
 
 CI does not currently build or publish a Docker image, deploy the API, provision
 cloud infrastructure, or configure AWS services.

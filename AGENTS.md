@@ -54,9 +54,18 @@ Database shell:
 Tests and checks, when dependencies are installed:
 
 ```bash
-pytest
+.venv/bin/python -m pytest -m unit
+.venv/bin/python -m pytest -m integration
+.venv/bin/python -m pytest -m "unit or integration"
 ruff check .
 ruff format --check .
+```
+
+E2E smoke tests are opt-in and require an already-running S3-backed Docker
+Compose stack:
+
+```bash
+PROJECTVAULT_RUN_E2E=1 .venv/bin/python -m pytest -m e2e
 ```
 
 Only run `ruff format .` when formatting changes are intended.
@@ -108,6 +117,12 @@ Use the existing `AppError` response shape:
 Add or update tests for behavior changes, especially auth, protected endpoints, permission checks, project/document access, and error responses.
 
 Keep tests isolated from the developer database. Follow the current in-memory SQLite fixture pattern unless a test explicitly needs PostgreSQL behavior.
+
+Tests must live under `tests/unit/`, `tests/integration/`, or `tests/e2e/`.
+Every test item must have exactly one of `unit`, `integration`, or `e2e`;
+collection fails otherwise. E2E tests are skipped by default unless
+`PROJECTVAULT_RUN_E2E=1` is set and an S3-backed Docker Compose stack is already
+running.
 
 ## Sub-Agent Profiles
 
