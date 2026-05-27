@@ -660,6 +660,15 @@ async def test_document_endpoints_require_authentication(
     list_response = await client.get("/projects/1/documents")
     read_response = await client.get("/documents/1")
     download_response = await client.get("/documents/1/download")
+    download_url_response = await client.get("/documents/1/download-url")
+    presign_response = await client.post(
+        "/projects/1/documents/presign-upload",
+        json={"filename": "contract.pdf", "content_type": "application/pdf"},
+    )
+    complete_response = await client.post(
+        "/projects/1/documents/complete-upload",
+        json={"document_id": 1},
+    )
     patch_response = await client.patch("/documents/1", json={"filename": "x.pdf"})
     put_response = await client.put("/documents/1", json={"filename": "x.pdf"})
     delete_response = await client.delete("/documents/1")
@@ -672,6 +681,12 @@ async def test_document_endpoints_require_authentication(
     assert read_response.json()["error"]["code"] == "MISSING_TOKEN"
     assert download_response.status_code == 401
     assert download_response.json()["error"]["code"] == "MISSING_TOKEN"
+    assert download_url_response.status_code == 401
+    assert download_url_response.json()["error"]["code"] == "MISSING_TOKEN"
+    assert presign_response.status_code == 401
+    assert presign_response.json()["error"]["code"] == "MISSING_TOKEN"
+    assert complete_response.status_code == 401
+    assert complete_response.json()["error"]["code"] == "MISSING_TOKEN"
     assert patch_response.status_code == 401
     assert patch_response.json()["error"]["code"] == "MISSING_TOKEN"
     assert put_response.status_code == 401

@@ -136,6 +136,12 @@ async def test_me_rejects_missing_token(client: AsyncClient) -> None:
     assert response.json()["error"]["code"] == "MISSING_TOKEN"
 
 
+def assert_app_error_shape(response: dict, expected_code: str) -> None:
+    assert response["error"]["code"] == expected_code
+    assert isinstance(response["error"]["message"], str)
+    assert response["error"]["details"] is None
+
+
 async def test_me_rejects_invalid_token(client: AsyncClient) -> None:
     response = await client.get(
         "/auth/me",
@@ -143,7 +149,30 @@ async def test_me_rejects_invalid_token(client: AsyncClient) -> None:
     )
 
     assert response.status_code == 401
-    assert response.json()["error"]["code"] == "INVALID_TOKEN"
+    assert_app_error_shape(response.json(), "INVALID_TOKEN")
+    assert response.headers["WWW-Authenticate"] == "Bearer"
+
+
+async def test_me_rejects_unsupported_authorization_scheme(client: AsyncClient) -> None:
+    response = await client.get(
+        "/auth/me",
+        headers={"Authorization": "Basic Zm9vOmJhcg=="},
+    )
+
+    assert response.status_code == 401
+    assert_app_error_shape(response.json(), "MISSING_TOKEN")
+    assert response.headers["WWW-Authenticate"] == "Bearer"
+
+
+async def test_me_rejects_empty_bearer_token(client: AsyncClient) -> None:
+    response = await client.get(
+        "/auth/me",
+        headers={"Authorization": "Bearer"},
+    )
+
+    assert response.status_code == 401
+    assert_app_error_shape(response.json(), "MISSING_TOKEN")
+    assert response.headers["WWW-Authenticate"] == "Bearer"
 
 
 async def test_me_rejects_expired_token(client: AsyncClient) -> None:

@@ -614,6 +614,50 @@ async def test_project_member_endpoints_require_authentication(
     assert accept_response.json()["error"]["code"] == "MISSING_TOKEN"
 
 
+async def test_projects_require_authentication_for_create_update_and_delete(
+    client: AsyncClient,
+) -> None:
+    create_response = await client.post(
+        "/projects",
+        json={"name": "Unauthorized Project"},
+    )
+    update_response = await client.patch(
+        "/projects/1",
+        json={"name": "Unauthorized Update"},
+    )
+    delete_response = await client.delete("/projects/1")
+
+    assert create_response.status_code == 401
+    assert create_response.json()["error"]["code"] == "MISSING_TOKEN"
+    assert update_response.status_code == 401
+    assert update_response.json()["error"]["code"] == "MISSING_TOKEN"
+    assert delete_response.status_code == 401
+    assert delete_response.json()["error"]["code"] == "MISSING_TOKEN"
+
+
+async def test_outsider_cannot_update_or_delete_project(client: AsyncClient) -> None:
+    owner_token = await register_and_login(client, "owner", "owner@example.com")
+    outsider_token = await register_and_login(client, "outsider", "outsider@example.com")
+    project = await create_project(client, owner_token)
+
+    update_response = await client.patch(
+        f"/projects/{project['id']}",
+        headers=bearer(outsider_token),
+        json={"name": "Hijacked"},
+    )
+    delete_response = await client.delete(
+        f"/projects/{project['id']}",
+        headers=bearer(outsider_token),
+    )
+
+    assert update_response.status_code == 404
+    assert update_response.json()["error"]["code"] == "PROJECT_NOT_FOUND"
+    assert update_response.json()["error"]["details"] is None
+    assert delete_response.status_code == 404
+    assert delete_response.json()["error"]["code"] == "PROJECT_NOT_FOUND"
+    assert delete_response.json()["error"]["details"] is None
+
+
 async def test_invite_rejects_unsupported_role(client: AsyncClient) -> None:
     owner_token = await register_and_login(client, "owner", "owner@example.com")
     await register_and_login(client, "other", "other@example.com")
