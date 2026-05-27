@@ -5,6 +5,7 @@ from httpx import AsyncClient
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.exceptions import AppError
 from app.models.document import Document
 from app.models.project import Project
 from app.services.storage import PresignedUrl, StoredObjectMetadata
@@ -146,6 +147,19 @@ class FakeS3Storage:
             ) from exc
 
 
+class FailingDeleteStorage:
+    def __init__(self) -> None:
+        self.deleted_keys: list[str] = []
+
+    def delete(self, storage_key: str) -> None:
+        self.deleted_keys.append(storage_key)
+        raise AppError(
+            status_code=500,
+            code="DOCUMENT_STORAGE_ERROR",
+            message="Document could not be deleted from storage.",
+        )
+
+
 @pytest.fixture
 def fake_s3_storage(monkeypatch: pytest.MonkeyPatch) -> FakeS3Storage:
     storage = FakeS3Storage()
@@ -239,6 +253,47 @@ async def test_owner_can_upload_list_read_rename_and_delete_document(
     assert deleted_document.status == "deleted"
     assert updated_project.documents_count == 0
     assert updated_project.total_size_bytes == 0
+
+
+async def test_delete_document_storage_failure_leaves_database_unchanged(
+    client: AsyncClient,
+    db_session: Session,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    token = await register_and_login(client, "owner", "owner@example.com")
+    project = await create_project(client, token)
+    document = await upload_pdf(client, token, project["id"])
+
+    db_session.expire_all()
+    saved_project = db_session.get(Project, project["id"])
+    assert saved_project is not None
+    original_documents_count = saved_project.documents_count
+    original_total_size_bytes = saved_project.total_size_bytes
+
+    failing_storage = FailingDeleteStorage()
+    monkeypatch.setattr(
+        "app.services.document_service.get_document_storage",
+        lambda: failing_storage,
+    )
+
+    delete_response = await client.delete(
+        f"/documents/{document['id']}",
+        headers=bearer(token),
+    )
+
+    assert delete_response.status_code == 500
+    assert delete_response.json()["error"]["code"] == "DOCUMENT_STORAGE_ERROR"
+    assert failing_storage.deleted_keys == [document["storage_key"]]
+
+    db_session.expire_all()
+    unchanged_document = db_session.get(Document, document["id"])
+    unchanged_project = db_session.get(Project, project["id"])
+    assert unchanged_document is not None
+    assert unchanged_project is not None
+    assert unchanged_document.deleted_at is None
+    assert unchanged_document.status == "uploaded"
+    assert unchanged_project.documents_count == original_documents_count
+    assert unchanged_project.total_size_bytes == original_total_size_bytes
 
 
 async def test_participant_can_manage_project_documents(

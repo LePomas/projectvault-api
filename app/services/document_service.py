@@ -323,6 +323,12 @@ class DocumentService:
         count_delta = -1 if document.status == "uploaded" else 0
         size_delta = -document.size_bytes if document.status == "uploaded" else 0
 
+        try:
+            self.storage.delete(document.storage_key)
+        except AppError:
+            self.db.rollback()
+            raise
+
         self.documents.soft_delete(document)
         self.projects.adjust_document_totals(
             project,
@@ -330,7 +336,6 @@ class DocumentService:
             size_delta=size_delta,
         )
         self.db.commit()
-        self.storage.delete(document.storage_key)
 
     @staticmethod
     def _validate_upload(file: UploadFile) -> str:
