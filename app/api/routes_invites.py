@@ -12,7 +12,9 @@ from app.services.project_service import ProjectService
 router = APIRouter(prefix="/invites", tags=["invites"])
 
 
-@router.post("/accept", response_model=ProjectMemberRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/accept", response_model=ProjectMemberRead, status_code=status.HTTP_201_CREATED
+)
 async def accept_project_invite(
     payload: ProjectInviteAccept,
     current_user: Annotated[User, Depends(get_current_user)],

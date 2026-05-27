@@ -637,7 +637,9 @@ async def test_projects_require_authentication_for_create_update_and_delete(
 
 async def test_outsider_cannot_update_or_delete_project(client: AsyncClient) -> None:
     owner_token = await register_and_login(client, "owner", "owner@example.com")
-    outsider_token = await register_and_login(client, "outsider", "outsider@example.com")
+    outsider_token = await register_and_login(
+        client, "outsider", "outsider@example.com"
+    )
     project = await create_project(client, owner_token)
 
     update_response = await client.patch(
