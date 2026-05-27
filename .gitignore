@@ -13,3 +13,4 @@ meetings/
 .directory
 storage/
 CLAUDE.md
+.vscode/settings.json
