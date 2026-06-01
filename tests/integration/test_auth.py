@@ -37,6 +37,25 @@ async def test_register_creates_user_without_plain_password(
     assert saved_user.password_hash != "super-secret-123"
 
 
+async def test_register_can_be_disabled(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "public_registration_enabled", False)
+
+    response = await client.post(
+        "/auth/register",
+        json={
+            "login": "ana",
+            "email": "ana@example.com",
+            "password": "super-secret-123",
+        },
+    )
+
+    assert response.status_code == 403
+    assert_app_error_shape(response.json(), "PUBLIC_REGISTRATION_DISABLED")
+
+
 async def test_register_rejects_duplicate_login(client: AsyncClient) -> None:
     await register_user(client)
 

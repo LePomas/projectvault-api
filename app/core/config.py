@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "ProjectVault API"
     app_env: str = "local"
+    cors_allowed_origins: str = ""
+    public_registration_enabled: bool = True
 
     database_url: str
     jwt_secret_key: str = "change-this-local-secret-with-32-bytes-minimum"
