@@ -339,16 +339,21 @@ on pull request:
   - validate Docker Compose config
 
 on merge to main:
-  - pending: build image
-  - pending: push image
-  - pending: deploy
+  - build API image
+  - push API image to ECR
+  - deploy API image to existing ECS service
+  - build documents Lambda image
+  - push documents Lambda image to ECR
+  - update existing Lambda function image
 ```
 
 ### Entregables
 
 - Implementado: GitHub Actions CI funcional.
 - Implementado: tests automaticos en CI.
-- Pendiente: Docker image publicada.
+- Implementado: GitHub Actions CD para publicar imagenes y desplegar recursos
+  AWS precreados.
+- Pendiente: Recursos AWS reales/IaC y primer despliegue validado.
 - Pendiente: Badge en README.
 
 ## Fase 7 - Deployment, documentacion y demo final
@@ -361,12 +366,12 @@ Cerrar el proyecto como entrega presentable.
 
 ### Scope AWS
 
-- Pendiente: Deploy API.
-- Pendiente: Deploy DB.
-- Pendiente: Configurar variables de entorno.
-- Pendiente: Configurar bucket.
-- Pendiente: Configurar Lambda.
-- Pendiente: Configurar logs.
+- Implementado en repo: workflow de deploy API a ECS existente.
+- Implementado en repo: workflow de update de Lambda existente por imagen.
+- Pendiente fuera del repo: Deploy DB/RDS.
+- Pendiente fuera del repo: Configurar variables de entorno/secrets reales.
+- Pendiente fuera del repo: Configurar bucket y notificacion S3 a Lambda.
+- Pendiente fuera del repo: Configurar logs/observabilidad reales.
 - Crear usuario demo.
 - Probar flujo completo.
 
@@ -436,6 +441,9 @@ Debe estar listo maximo el **viernes 12 de junio de 2026**.
 - Linting
 - Tests
 - Docker image build
+- ECR image publishing workflow
+- ECS deploy workflow for precreated resources
+- Lambda image update workflow for precreated function
 - Alembic migrations
 - README usable
 ```

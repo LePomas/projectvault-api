@@ -2,7 +2,7 @@
 title: "ProjectVault - Project Plan Index"
 version: "1.1"
 language: "es-MX"
-last_updated: "2026-05-21"
+last_updated: "2026-06-01"
 purpose: "Indice compacto para encontrar contexto de producto, arquitectura objetivo y roadmap sin cargar todo el plan completo."
 ---
 
@@ -51,9 +51,10 @@ Algunas capacidades en los documentos divididos son objetivo o roadmap, no
 garantía de implementación actual. En particular, no asumir que existen S3,
 Lambda, CI/CD, Alembic, deployment cloud o features opcionales hasta verificarlo
 en el código. El estado actual verificado es: MinIO/S3-compatible local y un
-handler estilo Lambda existen; GitHub Actions CI existe; Alembic tiene baseline
-inicial; deployment cloud, wiring real de AWS y migraciones posteriores al
-baseline siguen pendientes.
+handler estilo Lambda existen; GitHub Actions CI existe; GitHub Actions CD
+existe para recursos AWS precreados; Alembic tiene baseline inicial. La
+infraestructura AWS, el ambiente desplegado real y migraciones posteriores al
+baseline siguen pendientes fuera del código actual.
 
 ## Documentos divididos
 
