@@ -6,26 +6,37 @@ is defined for precreated AWS resources and does not provision infrastructure.
 
 ## Current Deployment State
 
-As of 2026-06-01, the live deployment setup is partial:
+As of 2026-06-01, the live deployment setup has completed the first internal
+AWS deployment path:
 
 - Done: ECR repositories for the API and documents Lambda images.
+- Done: ECR images for the API and documents Lambda, including commit-SHA
+  images pushed by GitHub Actions.
 - Done: production S3 bucket
   `projectvault-prod-lepomas-681742559054-us-east-1-an` with versioning, public
   access block, SSE-S3 encryption, and localhost CORS for initial testing.
+- Done: S3 ObjectCreated notification wired to `projectvault-documents`.
 - Done: IAM OIDC provider and `projectvault-github-deploy` trust policy for the
   GitHub `production` environment.
-- Done: Secrets Manager secret `projectvault/prod/JWT_SECRET_KEY`.
-- Pending: pushed ECR images.
-- Pending: RDS PostgreSQL and `projectvault/prod/DATABASE_URL`.
-- Pending: ECS cluster, service, and task definition.
-- Pending: documents Lambda function and S3 ObjectCreated notification.
-- Pending: deploy role permissions for ECR, ECS, Lambda, and `iam:PassRole`.
-- Pending: first successful end-to-end GitHub Actions deploy.
+- Done: deploy role permissions for ECR, ECS, Lambda, and `iam:PassRole`.
+- Done: Secrets Manager secrets `projectvault/prod/JWT_SECRET_KEY` and
+  `projectvault/prod/DATABASE_URL`.
+- Done: private RDS PostgreSQL instance `projectvault-prod`.
+- Done: ECS cluster `projectvault-prod`, service `projectvault-api`, and task
+  definition `projectvault-api`.
+- Done: image-based Lambda function `projectvault-documents`.
+- Done: first successful end-to-end GitHub Actions Deploy workflow run.
+- Pending: public HTTP ingress/load balancer or API domain for browser access.
+- Pending: production frontend origin; CORS currently allows
+  `http://localhost:3000`.
+- Pending: infrastructure-as-code for AWS resources.
+- Pending: app-level secret loading from Secrets Manager for Lambda. The current
+  Lambda environment was manually configured with `DATABASE_URL` after function
+  creation because the app expects environment variables at import time.
 
 ## AWS Resources Expected By CD
 
-Create or finish these resources before expecting the workflow to deploy
-successfully:
+The CD workflow expects these resources to exist before it runs:
 
 - ECR repository for the API image.
 - ECR repository for the documents Lambda image.
@@ -37,9 +48,9 @@ successfully:
 - IAM role for GitHub OIDC with permissions to push both ECR images, describe
   and deploy the ECS task definition, and update the Lambda function image.
 
-The ECS task definition should already contain production-only values that do
-not belong in GitHub, such as task roles, logging, networking, CPU/memory, and
-secret references for `DATABASE_URL` and `JWT_SECRET_KEY`.
+The ECS task definition contains production-only values that do not belong in
+GitHub, such as task roles, logging, networking, CPU/memory, and secret
+references for `DATABASE_URL` and `JWT_SECRET_KEY`.
 
 ## GitHub Production Variables
 
@@ -61,8 +72,9 @@ S3_BUCKET
 S3_REGION
 ```
 
-`CORS_ALLOWED_ORIGINS` is a comma-separated list. In production it should be the
-deployed frontend origin, for example `https://app.example.com`.
+`CORS_ALLOWED_ORIGINS` is a comma-separated list. It is currently set to
+`http://localhost:3000` for initial testing. When a frontend is deployed, replace
+it with the deployed frontend origin, for example `https://app.example.com`.
 
 For the current production bucket, set:
 
@@ -72,8 +84,7 @@ S3_BUCKET=projectvault-prod-lepomas-681742559054-us-east-1-an
 
 ## Deployment Flow
 
-`.github/workflows/deploy.yml` runs on pushes to `main` and manual dispatches
-after the workflow is pushed to GitHub:
+`.github/workflows/deploy.yml` runs on pushes to `main` and manual dispatches:
 
 1. Authenticate to AWS with GitHub OIDC.
 2. Build and push the FastAPI image from `Dockerfile` to ECR.

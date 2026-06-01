@@ -15,9 +15,11 @@ purpose: "Arquitectura objetivo, stack recomendado, storage y deployment futuro 
 > publicar imagenes en ECR, desplegar la API a un servicio ECS existente y
 > actualizar una Lambda existente por imagen. Alembic tiene baseline inicial;
 > MinIO local, adaptador S3-compatible y handler estilo Lambda existen. La
-> preparacion AWS live es parcial: ECR, bucket S3, OIDC y JWT secret existen;
-> RDS, `DATABASE_URL`, ECS, Lambda, imagenes ECR, permisos finales y primer
-> deploy end-to-end siguen pendientes.
+> preparacion AWS live ya incluye ECR con imagenes, bucket S3 de produccion,
+> OIDC, permisos de deploy, secrets JWT y `DATABASE_URL`, RDS PostgreSQL, ECS
+> service, Lambda por imagen, notificacion S3 ObjectCreated y un primer workflow
+> Deploy exitoso. Siguen pendientes el ingress publico/API domain, frontend
+> productivo, IaC y migraciones posteriores al baseline.
 
 ## Stack recomendado
 
@@ -211,9 +213,9 @@ S3 event → Lambda → update document metadata / project total size
 
 CI/CD:
 GitHub Actions CI → tests/lint/format check → Compose config validation
-GitHub Actions CD workflow in repo → build images → push ECR
-GitHub Actions CD workflow in repo → deploy existing ECS service when created
-GitHub Actions CD workflow in repo → update existing Lambda function when created
+GitHub Actions CD → build images → push ECR
+GitHub Actions CD → deploy existing ECS service
+GitHub Actions CD → update existing Lambda function
 ```
 
 ### Servicios AWS sugeridos

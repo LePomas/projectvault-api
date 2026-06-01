@@ -199,11 +199,14 @@ service, builds and pushes the documents Lambda image, and updates an existing
 Lambda function.
 
 The CD workflow does not provision AWS infrastructure. Current live deployment
-setup is partial: ECR repositories, a production S3 bucket, GitHub OIDC trust,
-and the JWT secret exist; RDS, the `DATABASE_URL` secret, ECS resources, the
-Lambda function, ECR images, role permissions, and the first end-to-end deploy
-are still pending. See `docs/DEPLOYMENT.md` for the required resources and
-variables.
+setup includes ECR repositories and images, a production S3 bucket with
+ObjectCreated notification, RDS PostgreSQL, Secrets Manager JWT and
+`DATABASE_URL` secrets, an ECS service, an image-based documents Lambda, GitHub
+OIDC trust, deployment role permissions, production GitHub variables, and one
+successful end-to-end Deploy workflow run. Public HTTP ingress for the ECS
+service, a production frontend origin, infrastructure-as-code, and forward
+migrations after the baseline remain future work. See `docs/DEPLOYMENT.md` for
+the current resources and variables.
 
 ## Project structure
 

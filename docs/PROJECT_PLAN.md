@@ -53,9 +53,11 @@ Lambda, CI/CD, Alembic, deployment cloud o features opcionales hasta verificarlo
 en el código. El estado actual verificado es: MinIO/S3-compatible local y un
 handler estilo Lambda existen; GitHub Actions CI existe; el workflow de GitHub
 Actions CD existe para recursos AWS precreados; Alembic tiene baseline inicial.
-La preparacion AWS live es parcial: ECR, bucket S3, OIDC y JWT secret existen;
-RDS, `DATABASE_URL`, ECS, Lambda, imagenes ECR, permisos finales, ambiente
-desplegado real y migraciones posteriores al baseline siguen pendientes.
+La preparacion AWS live ya incluye ECR con imagenes, bucket S3 de produccion,
+OIDC, permisos de deploy, secrets JWT y `DATABASE_URL`, RDS PostgreSQL, ECS
+service, Lambda por imagen, notificacion S3 ObjectCreated y un primer workflow
+Deploy exitoso. Siguen pendientes el ingress publico/API domain, frontend
+productivo, IaC y migraciones posteriores al baseline.
 
 ## Documentos divididos
 
