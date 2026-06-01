@@ -1,0 +1,116 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  API_ECR_REPOSITORY: ${{ vars.API_ECR_REPOSITORY }}
+  LAMBDA_ECR_REPOSITORY: ${{ vars.LAMBDA_ECR_REPOSITORY }}
+  ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+  ECS_SERVICE: ${{ vars.ECS_SERVICE }}
+  ECS_TASK_DEFINITION: ${{ vars.ECS_TASK_DEFINITION }}
+  ECS_CONTAINER_NAME: ${{ vars.ECS_CONTAINER_NAME }}
+  LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
+  APP_ENV: production
+  DOCUMENT_STORAGE_BACKEND: s3
+  PUBLIC_REGISTRATION_ENABLED: "false"
+  CORS_ALLOWED_ORIGINS: ${{ vars.CORS_ALLOWED_ORIGINS }}
+  PROJECT_STORAGE_LIMIT_BYTES: ${{ vars.PROJECT_STORAGE_LIMIT_BYTES }}
+  S3_BUCKET: ${{ vars.S3_BUCKET }}
+  S3_REGION: ${{ vars.S3_REGION }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push API image
+        id: api-image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          image_uri="$ECR_REGISTRY/$API_ECR_REPOSITORY:$IMAGE_TAG"
+          docker build -t "$image_uri" .
+          docker push "$image_uri"
+          echo "image=$image_uri" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push documents Lambda image
+        id: lambda-image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          image_uri="$ECR_REGISTRY/$LAMBDA_ECR_REPOSITORY:$IMAGE_TAG"
+          docker build -f Dockerfile.lambda -t "$image_uri" .
+          docker push "$image_uri"
+          echo "image=$image_uri" >> "$GITHUB_OUTPUT"
+
+      - name: Download current ECS task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "$ECS_TASK_DEFINITION" \
+            --query taskDefinition \
+            > task-definition.raw.json
+          jq 'del(
+            .taskDefinitionArn,
+            .revision,
+            .status,
+            .requiresAttributes,
+            .compatibilities,
+            .registeredAt,
+            .registeredBy
+          )' task-definition.raw.json > task-definition.json
+
+      - name: Render API image into task definition
+        id: task-definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.ECS_CONTAINER_NAME }}
+          image: ${{ steps.api-image.outputs.image }}
+          environment-variables: |
+            APP_ENV=${{ env.APP_ENV }}
+            DOCUMENT_STORAGE_BACKEND=${{ env.DOCUMENT_STORAGE_BACKEND }}
+            PUBLIC_REGISTRATION_ENABLED=${{ env.PUBLIC_REGISTRATION_ENABLED }}
+            CORS_ALLOWED_ORIGINS=${{ env.CORS_ALLOWED_ORIGINS }}
+            PROJECT_STORAGE_LIMIT_BYTES=${{ env.PROJECT_STORAGE_LIMIT_BYTES }}
+            S3_BUCKET=${{ env.S3_BUCKET }}
+            S3_REGION=${{ env.S3_REGION }}
+            S3_ENDPOINT_URL=
+            S3_PUBLIC_ENDPOINT_URL=
+
+      - name: Deploy API to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-definition.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Update documents Lambda image
+        run: |
+          aws lambda update-function-code \
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --image-uri "${{ steps.lambda-image.outputs.image }}" \
+            --publish

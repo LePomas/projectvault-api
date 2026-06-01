@@ -1,0 +1,12 @@
+FROM public.ecr.aws/lambda/python:3.12
+
+WORKDIR ${LAMBDA_TASK_ROOT}
+
+COPY pyproject.toml ./
+
+RUN pip install --no-cache-dir uv && \
+    uv pip install --system -r pyproject.toml
+
+COPY app ./app
+
+CMD ["app.lambda_handlers.s3_events.handler"]

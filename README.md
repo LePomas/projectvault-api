@@ -16,17 +16,16 @@ Secure project profiles and document management API.
 - S3 event handler for finalizing pending uploads
 - Alembic initial schema baseline
 - GitHub Actions CI for lint, format check, tests, and Compose validation
+- GitHub Actions CD workflow for precreated AWS ECS, ECR, and Lambda resources
 - pytest
 - httpx
 - Ruff
 
 ## Planned / Roadmap
 
-- AWS S3 deployment configuration
-- AWS Lambda deployment wiring
-- Docker image publishing and deployment automation
 - Forward database migrations beyond the initial Alembic baseline
-- README deployment guide for AWS or self-hosted production
+- Frontend implementation as an optional separate app
+- Infrastructure-as-code for AWS resources, if needed later
 
 ## Local development
 
@@ -102,8 +101,10 @@ container, and verifies that metadata is finalized without calling
 
 The event handler lives at `app.lambda_handlers.s3_events.handler`. It imports
 the app code, reads object metadata through the S3 storage adapter, and updates
-PostgreSQL directly. The handler is ready for AWS Lambda-style invocation, but
-AWS deployment wiring remains roadmap work.
+PostgreSQL directly. `Dockerfile.lambda` packages this handler for AWS Lambda
+container-image deployment through the CD workflow. The workflow updates an
+existing Lambda function; it does not create the function or S3 event
+notification.
 
 ### 5. Seed sample data
 
@@ -191,13 +192,15 @@ integration tests, and `docker compose config`.
 
 Live e2e smoke tests are not part of PR CI.
 
-CI does not currently build or publish a Docker image, deploy the API, provision
-cloud infrastructure, or configure AWS services.
+GitHub Actions CD is configured in `.github/workflows/deploy.yml` for a
+precreated AWS environment. On pushes to `main` or manual dispatch, it builds
+and pushes the API image to ECR, deploys the API image to an existing ECS
+service, builds and pushes the documents Lambda image, and updates an existing
+Lambda function.
 
-AWS deployment wiring remains roadmap work. The code includes an S3-compatible
-storage adapter and a Lambda-style event handler, but there is no tracked
-infrastructure, deployed Lambda configuration, RDS setup, production bucket
-configuration, registry publishing, or production deployment workflow.
+The CD workflow does not provision AWS infrastructure. It expects existing ECR
+repositories, ECS resources, RDS, S3, Lambda, IAM roles, and GitHub environment
+variables. See `docs/DEPLOYMENT.md` for the required resources and variables.
 
 ## Project structure
 
