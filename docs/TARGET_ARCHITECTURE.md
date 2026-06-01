@@ -11,12 +11,13 @@ purpose: "Arquitectura objetivo, stack recomendado, storage y deployment futuro 
 > Este documento describe arquitectura objetivo. No asumir que S3, Lambda,
 > Alembic, CI/CD o deployment cloud estan implementados sin verificar el codigo.
 > Estado actual verificado: CI de GitHub Actions existe para lint, format check,
-> tests y `docker compose config`; CD de GitHub Actions existe para publicar
-> imagenes en ECR, desplegar la API a un servicio ECS existente y actualizar
-> una Lambda existente por imagen; Alembic tiene baseline inicial; MinIO local,
-> adaptador S3-compatible y handler estilo Lambda existen. La infraestructura
-> AWS, RDS, buckets, Lambda real, notificaciones S3 y recursos ECS/ECR siguen
-> siendo recursos externos/precreados, no IaC del repo.
+> tests y `docker compose config`; el workflow de CD existe en el repo para
+> publicar imagenes en ECR, desplegar la API a un servicio ECS existente y
+> actualizar una Lambda existente por imagen. Alembic tiene baseline inicial;
+> MinIO local, adaptador S3-compatible y handler estilo Lambda existen. La
+> preparacion AWS live es parcial: ECR, bucket S3, OIDC y JWT secret existen;
+> RDS, `DATABASE_URL`, ECS, Lambda, imagenes ECR, permisos finales y primer
+> deploy end-to-end siguen pendientes.
 
 ## Stack recomendado
 
@@ -210,8 +211,9 @@ S3 event → Lambda → update document metadata / project total size
 
 CI/CD:
 GitHub Actions CI → tests/lint/format check → Compose config validation
-GitHub Actions CD → build images → push ECR → deploy existing ECS service
-GitHub Actions CD → push Lambda image → update existing Lambda function
+GitHub Actions CD workflow in repo → build images → push ECR
+GitHub Actions CD workflow in repo → deploy existing ECS service when created
+GitHub Actions CD workflow in repo → update existing Lambda function when created
 ```
 
 ### Servicios AWS sugeridos

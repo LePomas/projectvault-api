@@ -339,21 +339,24 @@ on pull request:
   - validate Docker Compose config
 
 on merge to main:
-  - build API image
-  - push API image to ECR
-  - deploy API image to existing ECS service
-  - build documents Lambda image
-  - push documents Lambda image to ECR
-  - update existing Lambda function image
+  - workflow defined: build API image
+  - workflow defined: push API image to ECR
+  - workflow defined: deploy API image to existing ECS service
+  - workflow defined: build documents Lambda image
+  - workflow defined: push documents Lambda image to ECR
+  - workflow defined: update existing Lambda function image
 ```
 
 ### Entregables
 
 - Implementado: GitHub Actions CI funcional.
 - Implementado: tests automaticos en CI.
-- Implementado: GitHub Actions CD para publicar imagenes y desplegar recursos
-  AWS precreados.
-- Pendiente: Recursos AWS reales/IaC y primer despliegue validado.
+- Implementado en repo: GitHub Actions CD para publicar imagenes y desplegar
+  recursos AWS precreados.
+- Implementado live: ECR repos, bucket S3 de produccion, OIDC trust y JWT
+  secret.
+- Pendiente live: RDS, `DATABASE_URL`, ECS, Lambda, imagenes ECR, permisos
+  finales y primer despliegue validado.
 - Pendiente: Badge en README.
 
 ## Fase 7 - Deployment, documentacion y demo final
@@ -368,9 +371,12 @@ Cerrar el proyecto como entrega presentable.
 
 - Implementado en repo: workflow de deploy API a ECS existente.
 - Implementado en repo: workflow de update de Lambda existente por imagen.
-- Pendiente fuera del repo: Deploy DB/RDS.
-- Pendiente fuera del repo: Configurar variables de entorno/secrets reales.
-- Pendiente fuera del repo: Configurar bucket y notificacion S3 a Lambda.
+- Implementado live: repos ECR, bucket S3 de produccion, OIDC trust y secret
+  `projectvault/prod/JWT_SECRET_KEY`.
+- Pendiente live: Deploy DB/RDS y secret `projectvault/prod/DATABASE_URL`.
+- Pendiente live: configurar variables GitHub para ECS/Lambda cuando existan.
+- Pendiente live: configurar Lambda y notificacion S3 ObjectCreated.
+- Pendiente live: subir primeras imagenes a ECR.
 - Pendiente fuera del repo: Configurar logs/observabilidad reales.
 - Crear usuario demo.
 - Probar flujo completo.

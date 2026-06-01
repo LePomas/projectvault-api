@@ -192,15 +192,18 @@ integration tests, and `docker compose config`.
 
 Live e2e smoke tests are not part of PR CI.
 
-GitHub Actions CD is configured in `.github/workflows/deploy.yml` for a
-precreated AWS environment. On pushes to `main` or manual dispatch, it builds
-and pushes the API image to ECR, deploys the API image to an existing ECS
+GitHub Actions CD is defined in `.github/workflows/deploy.yml` for a precreated
+AWS environment. When the required AWS resources and GitHub variables exist, it
+builds and pushes the API image to ECR, deploys the API image to an existing ECS
 service, builds and pushes the documents Lambda image, and updates an existing
 Lambda function.
 
-The CD workflow does not provision AWS infrastructure. It expects existing ECR
-repositories, ECS resources, RDS, S3, Lambda, IAM roles, and GitHub environment
-variables. See `docs/DEPLOYMENT.md` for the required resources and variables.
+The CD workflow does not provision AWS infrastructure. Current live deployment
+setup is partial: ECR repositories, a production S3 bucket, GitHub OIDC trust,
+and the JWT secret exist; RDS, the `DATABASE_URL` secret, ECS resources, the
+Lambda function, ECR images, role permissions, and the first end-to-end deploy
+are still pending. See `docs/DEPLOYMENT.md` for the required resources and
+variables.
 
 ## Project structure
 

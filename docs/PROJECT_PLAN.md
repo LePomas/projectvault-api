@@ -51,10 +51,11 @@ Algunas capacidades en los documentos divididos son objetivo o roadmap, no
 garantía de implementación actual. En particular, no asumir que existen S3,
 Lambda, CI/CD, Alembic, deployment cloud o features opcionales hasta verificarlo
 en el código. El estado actual verificado es: MinIO/S3-compatible local y un
-handler estilo Lambda existen; GitHub Actions CI existe; GitHub Actions CD
-existe para recursos AWS precreados; Alembic tiene baseline inicial. La
-infraestructura AWS, el ambiente desplegado real y migraciones posteriores al
-baseline siguen pendientes fuera del código actual.
+handler estilo Lambda existen; GitHub Actions CI existe; el workflow de GitHub
+Actions CD existe para recursos AWS precreados; Alembic tiene baseline inicial.
+La preparacion AWS live es parcial: ECR, bucket S3, OIDC y JWT secret existen;
+RDS, `DATABASE_URL`, ECS, Lambda, imagenes ECR, permisos finales, ambiente
+desplegado real y migraciones posteriores al baseline siguen pendientes.
 
 ## Documentos divididos
 
