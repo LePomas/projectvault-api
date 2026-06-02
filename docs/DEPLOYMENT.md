@@ -26,7 +26,8 @@ AWS deployment path:
   definition `projectvault-api`.
 - Done: image-based Lambda function `projectvault-documents`.
 - Done: first successful end-to-end GitHub Actions Deploy workflow run.
-- Pending: public HTTP ingress/load balancer or API domain for browser access.
+- Planned for mentor review: HTTPS API ingress at `api.lepomas.xyz` through an
+  Application Load Balancer restricted by source IP allowlist.
 - Pending: production frontend origin; CORS currently allows
   `http://localhost:3000`.
 - Pending: infrastructure-as-code for AWS resources.
@@ -67,6 +68,7 @@ ECS_TASK_DEFINITION
 ECS_CONTAINER_NAME
 LAMBDA_FUNCTION_NAME
 CORS_ALLOWED_ORIGINS
+PUBLIC_REGISTRATION_ENABLED
 PROJECT_STORAGE_LIMIT_BYTES
 S3_BUCKET
 S3_REGION
@@ -75,6 +77,10 @@ S3_REGION
 `CORS_ALLOWED_ORIGINS` is a comma-separated list. It is currently set to
 `http://localhost:3000` for initial testing. When a frontend is deployed, replace
 it with the deployed frontend origin, for example `https://app.example.com`.
+
+`PUBLIC_REGISTRATION_ENABLED` defaults to `false` in the deployment workflow
+when the GitHub variable is not set. For the mentor-review demo environment, set
+it to `true` only after HTTPS ingress is restricted to the approved source IPs.
 
 For the current production bucket, set:
 
@@ -98,7 +104,7 @@ The workflow sets these runtime values for the API container:
 ```text
 APP_ENV=production
 DOCUMENT_STORAGE_BACKEND=s3
-PUBLIC_REGISTRATION_ENABLED=false
+PUBLIC_REGISTRATION_ENABLED=${{ vars.PUBLIC_REGISTRATION_ENABLED || 'false' }}
 S3_ENDPOINT_URL=
 S3_PUBLIC_ENDPOINT_URL=
 ```
@@ -110,3 +116,38 @@ Blank S3 endpoint values make the storage adapter use AWS S3's default endpoint.
 The frontend is intentionally optional. When added, keep it as a separate app
 under `frontend/` with its own build, tests, and deployment path. The backend
 must continue to run without the frontend folder or frontend assets.
+
+## Mentor Review Ingress
+
+Expose the live API for review with a dedicated HTTPS hostname and network-level
+allowlist:
+
+1. Request an ACM certificate for `api.lepomas.xyz` in the same region as the
+   ALB.
+2. Add the ACM DNS validation record in Cloudflare.
+3. Create an internet-facing Application Load Balancer with an HTTPS listener
+   for the certificate and a target group for the existing ECS service.
+4. Allow inbound `443` on the ALB security group only from the mentor public
+   IP/CIDR and the owner public IP/CIDR.
+5. Allow inbound API traffic on the ECS task security group only from the ALB
+   security group.
+6. Add a DNS-only Cloudflare `CNAME` for `api.lepomas.xyz` pointing to the ALB
+   DNS name. Do not proxy this record, because the AWS security group must see
+   the real client source IP.
+7. Set the GitHub production variable
+   `PUBLIC_REGISTRATION_ENABLED=true`, then run the Deploy workflow.
+
+Review smoke checks from an allowed source IP:
+
+```bash
+curl https://api.lepomas.xyz/health
+curl -X POST https://api.lepomas.xyz/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"login":"mentor","email":"mentor@example.com","password":"super-secret-123"}'
+curl -X POST https://api.lepomas.xyz/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"login":"mentor","password":"super-secret-123"}'
+```
+
+From a non-allowed source IP, the API should be unreachable before FastAPI
+handles the request.

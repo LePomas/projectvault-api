@@ -203,10 +203,12 @@ setup includes ECR repositories and images, a production S3 bucket with
 ObjectCreated notification, RDS PostgreSQL, Secrets Manager JWT and
 `DATABASE_URL` secrets, an ECS service, an image-based documents Lambda, GitHub
 OIDC trust, deployment role permissions, production GitHub variables, and one
-successful end-to-end Deploy workflow run. Public HTTP ingress for the ECS
-service, a production frontend origin, infrastructure-as-code, and forward
-migrations after the baseline remain future work. See `docs/DEPLOYMENT.md` for
-the current resources and variables.
+successful end-to-end Deploy workflow run. Mentor-review ingress is planned as
+`https://api.lepomas.xyz` through an HTTPS Application Load Balancer restricted
+by source IP allowlist. A production frontend origin, infrastructure-as-code,
+and forward migrations after the baseline remain future work. See
+`docs/DEPLOYMENT.md` for the current resources, variables, and live-review
+runbook.
 
 ## Project structure
 
