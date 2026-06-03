@@ -28,6 +28,7 @@ AWS deployment path:
 - Done: first successful end-to-end GitHub Actions Deploy workflow run.
 - Planned for mentor review: HTTPS API ingress at `api.lepomas.xyz` through an
   Application Load Balancer restricted by source IP allowlist.
+- Done: local mentor-review frontend under `frontend/`.
 - Pending: production frontend origin; CORS currently allows
   `http://localhost:3000`.
 - Pending: infrastructure-as-code for AWS resources.
@@ -113,9 +114,24 @@ Blank S3 endpoint values make the storage adapter use AWS S3's default endpoint.
 
 ## Frontend Boundary
 
-The frontend is intentionally optional. When added, keep it as a separate app
-under `frontend/` with its own build, tests, and deployment path. The backend
-must continue to run without the frontend folder or frontend assets.
+The frontend is intentionally optional and lives as a separate Vite app under
+`frontend/`. The backend must continue to run without the frontend folder or
+frontend assets.
+
+Local review commands:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The local app runs on `http://localhost:3000` and reads
+`VITE_PROJECTVAULT_API_BASE_URL`, defaulting to `https://api.lepomas.xyz`.
+
+When the frontend is deployed publicly, use `https://app.lepomas.xyz` and set
+the backend production `CORS_ALLOWED_ORIGINS` to include both
+`http://localhost:3000` and `https://app.lepomas.xyz`.
 
 ## Mentor Review Ingress
 

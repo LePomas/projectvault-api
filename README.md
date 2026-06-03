@@ -15,16 +15,18 @@ Secure project profiles and document management API.
 - JWT authentication
 - S3 event handler for finalizing pending uploads
 - Alembic initial schema baseline
+- React and Vite frontend for mentor-review workflows
 - GitHub Actions CI for lint, format check, tests, and Compose validation
 - GitHub Actions CD workflow for precreated AWS ECS, ECR, and Lambda resources
 - pytest
 - httpx
 - Ruff
+- TypeScript
 
 ## Planned / Roadmap
 
 - Forward database migrations beyond the initial Alembic baseline
-- Frontend implementation as an optional separate app
+- Production frontend deployment
 - Infrastructure-as-code for AWS resources, if needed later
 
 ## Local development
@@ -106,7 +108,36 @@ container-image deployment through the CD workflow. The workflow updates an
 existing Lambda function; it does not create the function or S3 event
 notification.
 
-### 5. Seed sample data
+### 5. Frontend review app
+
+The frontend lives under `frontend/` and is intentionally separate from the API
+runtime. It defaults to the live review API at `https://api.lepomas.xyz`.
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+The deployed API currently allows CORS from `http://localhost:3000`. To point
+the frontend at a different API, set:
+
+```env
+VITE_PROJECTVAULT_API_BASE_URL=http://localhost:8000
+```
+
+The frontend targets the current singular business routes such as `POST
+/project`, `GET /project/{project_id}/info`, `POST
+/project/{project_id}/invite?user={login}`, and `GET
+/document/{document_id}/download-url`.
+
+### 6. Seed sample data
 
 Populate the Docker Compose PostgreSQL database with reusable demo data:
 
@@ -188,7 +219,8 @@ baseline aligned when changing the schema.
 
 GitHub Actions CI is configured in `.github/workflows/ci.yml`. It installs the
 Python dependencies, runs Ruff linting, Ruff format check, unit tests,
-integration tests, and `docker compose config`.
+integration tests, and `docker compose config`. It also installs the frontend
+dependencies, runs the TypeScript check, and builds the Vite app.
 
 Live e2e smoke tests are not part of PR CI.
 
@@ -227,6 +259,7 @@ db/
   init/             PostgreSQL bootstrap SQL
 tests/              Automated tests
 docs/               Technical documentation
+frontend/           React/Vite mentor-review app
 ```
 
 ## Initial setup status
