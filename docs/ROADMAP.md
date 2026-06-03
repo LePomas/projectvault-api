@@ -543,6 +543,7 @@ Antes de presentar el proyecto, verificar:
 [ ] owner puede invitar participant
 [ ] participant puede editar proyecto
 [ ] participant puede subir documentos
+[ ] participant no puede borrar documentos
 [ ] documentos respetan permisos del proyecto
 [ ] se aceptan solo pdf/docx en MVP
 [ ] metadata de documentos se guarda en DB

@@ -48,6 +48,10 @@ JWT expiration:
 | Unsupported file type  | 415 Unsupported Media Type |
 | Storage limit exceeded | 413 Payload Too Large      |
 
+Use `403` when an authenticated caller requests an existing resource but lacks
+membership or role permission. Use `404` for missing, soft-deleted, or
+wrong-status resources.
+
 ## Endpoint naming
 
 Use plural nouns:

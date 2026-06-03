@@ -32,6 +32,10 @@ removal is not exposed in this phase.
 | View project | Yes | Yes | No |
 | Edit project | Yes | Yes | No |
 | Delete project | Yes | No | No |
+| View documents | Yes | Yes | No |
+| Upload documents | Yes | Yes | No |
+| Update documents | Yes | Yes | No |
+| Delete documents | Yes | No | No |
 | List project members | Yes | Yes | No |
 | Create owner invites | Yes | No | No |
 | Create participant invites | Yes | No | No |
@@ -39,5 +43,7 @@ removal is not exposed in this phase.
 | Remove participants | Yes | No | No |
 | Remove owner membership | No | No | No |
 
-Owner-only permission failures use the same hidden `404 PROJECT_NOT_FOUND`
-pattern as protected project deletion.
+Authenticated callers receive `403 PROJECT_FORBIDDEN` or
+`403 DOCUMENT_FORBIDDEN` when an existing project or document is blocked by
+membership or role permissions. Missing, soft-deleted, or wrong-status
+resources return the relevant `404`.

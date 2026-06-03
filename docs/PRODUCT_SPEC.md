@@ -130,7 +130,8 @@ GET  /documents/{document_id}/download-url
 
 - Cada documento pertenece a un proyecto.
 - Solo usuarios con acceso al proyecto pueden ver/descargar documentos.
-- Owner y participant pueden agregar, actualizar y eliminar documentos.
+- Owner y participant pueden agregar y actualizar documentos.
+- Solo owner puede eliminar documentos.
 - Al borrar un proyecto, deben borrarse o marcarse como eliminados sus documentos correspondientes.
 - Solo se aceptan archivos `.pdf` y `.docx` para el MVP.
 - Guardar metadata del archivo en PostgreSQL.
@@ -155,7 +156,7 @@ GET  /documents/{document_id}/download-url
 | Ver documentos | Si | Si | No |
 | Subir documentos | Si | Si | No |
 | Actualizar documentos | Si | Si | No |
-| Eliminar documentos | Si | Si | No |
+| Eliminar documentos | Si | No | No |
 | Invitar owners | Si | No | No |
 | Invitar participants | Si | No | No |
 | Quitar usuarios | Si | No | No |
