@@ -71,40 +71,44 @@ POST /auth/login
 GET  /auth/me
 ```
 
+`POST /auth/register` requires `login`, `email`, `password`, and
+`repeat_password`.
+
 ### Projects
 
 ```http
-POST   /projects
+POST   /project
 GET    /projects
-GET    /projects/{project_id}
-PATCH  /projects/{project_id}
-DELETE /projects/{project_id}
+GET    /project/{project_id}/info
+PATCH  /project/{project_id}/info
+DELETE /project/{project_id}
 ```
 
 ### Project members and invites
 
 ```http
-POST   /projects/{project_id}/invites
-GET    /projects/{project_id}/members
-DELETE /projects/{project_id}/members/{user_id}
+POST   /project/{project_id}/invite?user={login}
+GET    /project/{project_id}/members
+DELETE /project/{project_id}/members/{user_id}
 ```
 
 ### Documents
 
 ```http
-GET    /projects/{project_id}/documents
-POST   /projects/{project_id}/documents
-GET    /documents/{document_id}
-PATCH  /documents/{document_id}
-DELETE /documents/{document_id}
+GET    /project/{project_id}/documents
+POST   /project/{project_id}/documents
+GET    /document/{document_id}
+GET    /document/{document_id}/info
+PUT    /document/{document_id}
+DELETE /document/{document_id}
 ```
 
 ### S3 presigned flow, recomendado para produccion
 
 ```http
-POST /projects/{project_id}/documents/presign-upload
-POST /projects/{project_id}/documents/complete-upload
-GET  /documents/{document_id}/download-url
+POST /project/{project_id}/documents/presign-upload
+POST /project/{project_id}/documents/complete-upload
+GET  /document/{document_id}/download-url
 ```
 
 ## Reglas de negocio
@@ -123,6 +127,8 @@ GET  /documents/{document_id}/download-url
 - Un proyecto puede tener multiples usuarios asociados.
 - Un proyecto debe tener al menos un owner.
 - Solo usuarios con acceso pueden ver el proyecto.
+- `GET /projects` devuelve informacion completa del proyecto y nombres de
+  documentos, sin metadata de documentos.
 - Owner y participant pueden actualizar detalles del proyecto.
 - Solo owner puede eliminar el proyecto.
 

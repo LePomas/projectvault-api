@@ -1,12 +1,8 @@
-@localBaseUrl = http://localhost:8000
-@reviewBaseUrl = https://api.lepomas.xyz
-@reviewAlbDnsName = projectvault-api-review-299417498.us-east-1.elb.amazonaws.com
-
+@localBaseUrl@reviewBaseUrl@reviewAlbDnsName
 # Default target for the collection.
 # - Local Docker Compose: keep localBaseUrl.
 # - Live mentor review after DNS works: change to reviewBaseUrl.
-@baseUrl = {{reviewBaseUrl}}
-
+@baseUrl
 # Live review notes:
 # - Use HTTPS only. There is no HTTP listener for the review ALB.
 # - Browser after DNS/CNAME:
@@ -25,7 +21,7 @@
 #   carla / super-secret-123
 #   diego / super-secret-123
 #
-# The seed script prints current project/document IDs and pending invite tokens.
+# The seed script prints current project/document IDs.
 
 # Paste access_token values from the login responses below.
 @anaToken = paste-ana-access-token-here
@@ -33,18 +29,14 @@
 @carlaToken = paste-carla-access-token-here
 @diegoToken = paste-diego-access-token-here
 
-# Paste IDs and invite token from API responses as you create them.
+# Paste IDs from API responses as you create them.
 @projectId = paste-project-id-here
 @bobUserId = paste-bob-user-id-here
 @carlaUserId = paste-carla-user-id-here
 @diegoUserId = paste-diego-user-id-here
-@inviteToken = paste-participant-invite-token-here
-@ownerInviteToken = paste-owner-invite-token-here
-@seedDiegoInviteToken = sample-gamma-diego-pending-token
 @documentId = paste-document-id-here
 @presignedDocumentId = paste-presigned-document-id-here
 @presignedUploadUrl = paste-presigned-upload-url-here
-
 
 ### Live review - Health after DNS/CNAME
 GET {{reviewBaseUrl}}/health
@@ -76,7 +68,8 @@ Content-Type: application/json
 {
   "login": "ana",
   "email": "ana@example.com",
-  "password": "super-secret-123"
+  "password": "super-secret-123",
+  "repeat_password": "super-secret-123"
 }
 
 ### Auth - Registrar Bob
@@ -86,7 +79,8 @@ Content-Type: application/json
 {
   "login": "bob",
   "email": "bob@example.com",
-  "password": "super-secret-123"
+  "password": "super-secret-123",
+  "repeat_password": "super-secret-123"
 }
 
 ### Auth - Registrar Carla
@@ -96,7 +90,8 @@ Content-Type: application/json
 {
   "login": "carla",
   "email": "carla@example.com",
-  "password": "super-secret-123"
+  "password": "super-secret-123",
+  "repeat_password": "super-secret-123"
 }
 
 ### Auth - Registrar login duplicado
@@ -106,7 +101,8 @@ Content-Type: application/json
 {
   "login": "ana",
   "email": "ana.duplicate@example.com",
-  "password": "super-secret-123"
+  "password": "super-secret-123",
+  "repeat_password": "super-secret-123"
 }
 
 ### Auth - Registrar email duplicado
@@ -116,7 +112,8 @@ Content-Type: application/json
 {
   "login": "ana_duplicate",
   "email": "ana@example.com",
-  "password": "super-secret-123"
+  "password": "super-secret-123",
+  "repeat_password": "super-secret-123"
 }
 
 ### Auth - Login Ana
@@ -177,7 +174,7 @@ Authorization: Bearer invalid-token
 
 
 ### Projects - Crear proyecto como Ana
-POST {{baseUrl}}/projects
+POST {{baseUrl}}/project
 Authorization: Bearer {{anaToken}}
 Content-Type: application/json
 
@@ -187,7 +184,7 @@ Content-Type: application/json
 }
 
 ### Projects - Crear proyecto sin descripcion
-POST {{baseUrl}}/projects
+POST {{baseUrl}}/project
 Authorization: Bearer {{anaToken}}
 Content-Type: application/json
 
@@ -196,7 +193,7 @@ Content-Type: application/json
 }
 
 ### Projects - Crear proyecto sin token
-POST {{baseUrl}}/projects
+POST {{baseUrl}}/project
 Content-Type: application/json
 
 {
@@ -216,18 +213,18 @@ Authorization: Bearer {{bobToken}}
 GET {{baseUrl}}/projects
 
 ### Projects - Consultar detalle como Ana
-GET {{baseUrl}}/projects/{{projectId}}
+GET {{baseUrl}}/project/{{projectId}}/info
 Authorization: Bearer {{anaToken}}
 
-### Projects - Consultar detalle como Bob antes de aceptar invitacion
-GET {{baseUrl}}/projects/{{projectId}}
+### Projects - Consultar detalle como Bob antes de grant
+GET {{baseUrl}}/project/{{projectId}}/info
 Authorization: Bearer {{bobToken}}
 
 ### Projects - Consultar detalle sin token
-GET {{baseUrl}}/projects/{{projectId}}
+GET {{baseUrl}}/project/{{projectId}}/info
 
 ### Projects - Actualizar nombre y descripcion
-PATCH {{baseUrl}}/projects/{{projectId}}
+PATCH {{baseUrl}}/project/{{projectId}}/info
 Authorization: Bearer {{anaToken}}
 Content-Type: application/json
 
@@ -237,7 +234,7 @@ Content-Type: application/json
 }
 
 ### Projects - Actualizar solo descripcion a null
-PATCH {{baseUrl}}/projects/{{projectId}}
+PATCH {{baseUrl}}/project/{{projectId}}/info
 Authorization: Bearer {{anaToken}}
 Content-Type: application/json
 
@@ -246,14 +243,14 @@ Content-Type: application/json
 }
 
 ### Projects - Actualizar con cuerpo vacio
-PATCH {{baseUrl}}/projects/{{projectId}}
+PATCH {{baseUrl}}/project/{{projectId}}/info
 Authorization: Bearer {{anaToken}}
 Content-Type: application/json
 
 {}
 
 ### Projects - Actualizar sin token
-PATCH {{baseUrl}}/projects/{{projectId}}
+PATCH {{baseUrl}}/project/{{projectId}}/info
 Content-Type: application/json
 
 {
@@ -261,147 +258,59 @@ Content-Type: application/json
 }
 
 
-### Project invites - Invitar Bob como participant
-POST {{baseUrl}}/projects/{{projectId}}/invites
+### Project invites - Otorgar acceso participant a Bob
+POST {{baseUrl}}/project/{{projectId}}/invite?user=bob
 Authorization: Bearer {{anaToken}}
-Content-Type: application/json
 
-{
-  "login": "bob",
-  "role": "participant"
-}
-
-### Project invites - Invitar Carla como owner
-POST {{baseUrl}}/projects/{{projectId}}/invites
+### Project invites - Otorgar acceso participant a Carla
+POST {{baseUrl}}/project/{{projectId}}/invite?user=carla
 Authorization: Bearer {{anaToken}}
-Content-Type: application/json
 
-{
-  "login": "carla",
-  "role": "owner"
-}
-
-### Project invites - Invitar usuario inexistente
-POST {{baseUrl}}/projects/{{projectId}}/invites
+### Project invites - Usuario inexistente
+POST {{baseUrl}}/project/{{projectId}}/invite?user=missing-user
 Authorization: Bearer {{anaToken}}
-Content-Type: application/json
 
-{
-  "login": "missing-user",
-  "role": "participant"
-}
-
-### Project invites - Invitar con rol invalido
-POST {{baseUrl}}/projects/{{projectId}}/invites
-Authorization: Bearer {{anaToken}}
-Content-Type: application/json
-
-{
-  "login": "bob",
-  "role": "admin"
-}
-
-### Project invites - Invitar sin token
-POST {{baseUrl}}/projects/{{projectId}}/invites
-Content-Type: application/json
-
-{
-  "login": "bob",
-  "role": "participant"
-}
-
-
-### Invites - Aceptar invitacion como Bob
-POST {{baseUrl}}/invites/accept
-Authorization: Bearer {{bobToken}}
-Content-Type: application/json
-
-{
-  "token": "{{inviteToken}}"
-}
-
-### Invites - Aceptar invitacion owner como Carla
-POST {{baseUrl}}/invites/accept
-Authorization: Bearer {{carlaToken}}
-Content-Type: application/json
-
-{
-  "token": "{{ownerInviteToken}}"
-}
-
-### Invites - Aceptar invitacion sembrada como Diego
-POST {{baseUrl}}/invites/accept
-Authorization: Bearer {{diegoToken}}
-Content-Type: application/json
-
-{
-  "token": "{{seedDiegoInviteToken}}"
-}
-
-### Invites - Aceptar invitacion como Ana debe ocultar invitacion
-POST {{baseUrl}}/invites/accept
-Authorization: Bearer {{anaToken}}
-Content-Type: application/json
-
-{
-  "token": "{{inviteToken}}"
-}
-
-### Invites - Aceptar invitacion con token invalido
-POST {{baseUrl}}/invites/accept
-Authorization: Bearer {{bobToken}}
-Content-Type: application/json
-
-{
-  "token": "invalid-invite-token"
-}
-
-### Invites - Aceptar invitacion sin bearer token
-POST {{baseUrl}}/invites/accept
-Content-Type: application/json
-
-{
-  "token": "{{inviteToken}}"
-}
+### Project invites - Otorgar acceso sin token
+POST {{baseUrl}}/project/{{projectId}}/invite?user=bob
 
 
 ### Project members - Listar miembros como Ana
-GET {{baseUrl}}/projects/{{projectId}}/members
+GET {{baseUrl}}/project/{{projectId}}/members
 Authorization: Bearer {{anaToken}}
 
-### Project members - Listar miembros como Bob despues de aceptar invitacion
-GET {{baseUrl}}/projects/{{projectId}}/members
+### Project members - Listar miembros como Bob despues de grant
+GET {{baseUrl}}/project/{{projectId}}/members
 Authorization: Bearer {{bobToken}}
 
-### Project members - Listar miembros como Carla owner despues de aceptar invitacion
-GET {{baseUrl}}/projects/{{projectId}}/members
+### Project members - Listar miembros como Carla owner despues de grant
+GET {{baseUrl}}/project/{{projectId}}/members
 Authorization: Bearer {{carlaToken}}
 
 ### Project members - Listar miembros sin token
-GET {{baseUrl}}/projects/{{projectId}}/members
+GET {{baseUrl}}/project/{{projectId}}/members
 
 ### Project members - Quitar participant Bob como Ana
-DELETE {{baseUrl}}/projects/{{projectId}}/members/{{bobUserId}}
+DELETE {{baseUrl}}/project/{{projectId}}/members/{{bobUserId}}
 Authorization: Bearer {{anaToken}}
 
 ### Project members - Quitar owner Ana debe devolver 404
-DELETE {{baseUrl}}/projects/{{projectId}}/members/1
+DELETE {{baseUrl}}/project/{{projectId}}/members/1
 Authorization: Bearer {{anaToken}}
 
 ### Project members - Quitar owner Carla debe devolver 404
-DELETE {{baseUrl}}/projects/{{projectId}}/members/{{carlaUserId}}
+DELETE {{baseUrl}}/project/{{projectId}}/members/{{carlaUserId}}
 Authorization: Bearer {{anaToken}}
 
 ### Project members - Quitar miembro como Bob debe devolver 404
-DELETE {{baseUrl}}/projects/{{projectId}}/members/{{bobUserId}}
+DELETE {{baseUrl}}/project/{{projectId}}/members/{{bobUserId}}
 Authorization: Bearer {{bobToken}}
 
 ### Project members - Quitar miembro sin token
-DELETE {{baseUrl}}/projects/{{projectId}}/members/{{bobUserId}}
+DELETE {{baseUrl}}/project/{{projectId}}/members/{{bobUserId}}
 
 
 ### Documents - Subir PDF como Ana
-POST {{baseUrl}}/projects/{{projectId}}/documents
+POST {{baseUrl}}/project/{{projectId}}/documents
 Authorization: Bearer {{anaToken}}
 Content-Type: multipart/form-data; boundary=ProjectVaultBoundary
 
@@ -414,7 +323,7 @@ ProjectVault test PDF content
 --ProjectVaultBoundary--
 
 ### Documents - Subir DOCX como Ana
-POST {{baseUrl}}/projects/{{projectId}}/documents
+POST {{baseUrl}}/project/{{projectId}}/documents
 Authorization: Bearer {{anaToken}}
 Content-Type: multipart/form-data; boundary=ProjectVaultBoundary
 
@@ -426,7 +335,7 @@ ProjectVault test DOCX content
 --ProjectVaultBoundary--
 
 ### Documents - Subir TXT debe devolver 415
-POST {{baseUrl}}/projects/{{projectId}}/documents
+POST {{baseUrl}}/project/{{projectId}}/documents
 Authorization: Bearer {{anaToken}}
 Content-Type: multipart/form-data; boundary=ProjectVaultBoundary
 
@@ -438,7 +347,7 @@ Plain text is not supported
 --ProjectVaultBoundary--
 
 ### Documents - Subir PDF con content_type incorrecto debe devolver 415
-POST {{baseUrl}}/projects/{{projectId}}/documents
+POST {{baseUrl}}/project/{{projectId}}/documents
 Authorization: Bearer {{anaToken}}
 Content-Type: multipart/form-data; boundary=ProjectVaultBoundary
 
@@ -450,7 +359,7 @@ This filename is PDF but content type is text/plain
 --ProjectVaultBoundary--
 
 ### Documents S3 - Pedir URL presignada de upload PDF
-POST {{baseUrl}}/projects/{{projectId}}/documents/presign-upload
+POST {{baseUrl}}/project/{{projectId}}/documents/presign-upload
 Authorization: Bearer {{anaToken}}
 Content-Type: application/json
 
@@ -467,7 +376,7 @@ Content-Type: application/pdf
 ProjectVault S3-compatible PDF content
 
 ### Documents S3 - Completar upload
-POST {{baseUrl}}/projects/{{projectId}}/documents/complete-upload
+POST {{baseUrl}}/project/{{projectId}}/documents/complete-upload
 Authorization: Bearer {{anaToken}}
 Content-Type: application/json
 
@@ -476,44 +385,44 @@ Content-Type: application/json
 }
 
 ### Documents - Listar documentos como Ana
-GET {{baseUrl}}/projects/{{projectId}}/documents
+GET {{baseUrl}}/project/{{projectId}}/documents
 Authorization: Bearer {{anaToken}}
 
 ### Documents - Listar documentos sin token
-GET {{baseUrl}}/projects/{{projectId}}/documents
+GET {{baseUrl}}/project/{{projectId}}/documents
 
-### Documents - Listar documentos como Bob antes de aceptar invitacion debe devolver 404
-GET {{baseUrl}}/projects/{{projectId}}/documents
+### Documents - Listar documentos como Bob antes de grant debe devolver 404
+GET {{baseUrl}}/project/{{projectId}}/documents
 Authorization: Bearer {{bobToken}}
 
 ### Documents - Consultar metadata como Ana
-GET {{baseUrl}}/documents/{{documentId}}
+GET {{baseUrl}}/document/{{documentId}}/info
 Authorization: Bearer {{anaToken}}
 
 ### Documents - Descargar archivo como Ana
-GET {{baseUrl}}/documents/{{documentId}}/download
+GET {{baseUrl}}/document/{{documentId}}
 Authorization: Bearer {{anaToken}}
 
 ### Documents S3 - Obtener URL presignada de descarga
-GET {{baseUrl}}/documents/{{documentId}}/download-url
+GET {{baseUrl}}/document/{{documentId}}/download-url
 Authorization: Bearer {{anaToken}}
 
 ### Documents - Consultar metadata sin token
-GET {{baseUrl}}/documents/{{documentId}}
+GET {{baseUrl}}/document/{{documentId}}/info
 
 ### Documents - Descargar archivo sin token
-GET {{baseUrl}}/documents/{{documentId}}/download
+GET {{baseUrl}}/document/{{documentId}}
 
-### Documents - Consultar metadata como Bob antes de aceptar invitacion debe devolver 404
-GET {{baseUrl}}/documents/{{documentId}}
+### Documents - Consultar metadata como Bob antes de grant debe devolver 404
+GET {{baseUrl}}/document/{{documentId}}/info
 Authorization: Bearer {{bobToken}}
 
-### Documents - Descargar archivo como Bob antes de aceptar invitacion debe devolver 404
-GET {{baseUrl}}/documents/{{documentId}}/download
+### Documents - Descargar archivo como Bob antes de grant debe devolver 404
+GET {{baseUrl}}/document/{{documentId}}
 Authorization: Bearer {{bobToken}}
 
 ### Documents - Renombrar documento como Ana
-PUT {{baseUrl}}/documents/{{documentId}}
+PUT {{baseUrl}}/document/{{documentId}}
 Authorization: Bearer {{anaToken}}
 Content-Type: application/json
 
@@ -522,15 +431,15 @@ Content-Type: application/json
 }
 
 ### Documents - Renombrar documento sin token
-PUT {{baseUrl}}/documents/{{documentId}}
+PUT {{baseUrl}}/document/{{documentId}}
 Content-Type: application/json
 
 {
   "filename": "unauthorized.pdf"
 }
 
-### Documents - Renombrar documento como Bob antes de aceptar invitacion debe devolver 404
-PUT {{baseUrl}}/documents/{{documentId}}
+### Documents - Renombrar documento como Bob antes de grant debe devolver 404
+PUT {{baseUrl}}/document/{{documentId}}
 Authorization: Bearer {{bobToken}}
 Content-Type: application/json
 
@@ -539,32 +448,32 @@ Content-Type: application/json
 }
 
 ### Documents - Eliminar documento como Ana
-DELETE {{baseUrl}}/documents/{{documentId}}
+DELETE {{baseUrl}}/document/{{documentId}}
 Authorization: Bearer {{anaToken}}
 
 ### Documents - Verificar documento eliminado debe devolver 404
-GET {{baseUrl}}/documents/{{documentId}}
+GET {{baseUrl}}/document/{{documentId}}/info
 Authorization: Bearer {{anaToken}}
 
 ### Documents - Eliminar documento sin token
-DELETE {{baseUrl}}/documents/{{documentId}}
+DELETE {{baseUrl}}/document/{{documentId}}
 
 
 ### Projects - Eliminar proyecto como Bob debe devolver 404
-DELETE {{baseUrl}}/projects/{{projectId}}
+DELETE {{baseUrl}}/project/{{projectId}}
 Authorization: Bearer {{bobToken}}
 
 ### Projects - Eliminar proyecto como owner Ana
-DELETE {{baseUrl}}/projects/{{projectId}}
+DELETE {{baseUrl}}/project/{{projectId}}
 Authorization: Bearer {{anaToken}}
 
 ### Projects - Eliminar proyecto como owner Carla
-DELETE {{baseUrl}}/projects/{{projectId}}
+DELETE {{baseUrl}}/project/{{projectId}}
 Authorization: Bearer {{carlaToken}}
 
 ### Projects - Eliminar proyecto sin token
-DELETE {{baseUrl}}/projects/{{projectId}}
+DELETE {{baseUrl}}/project/{{projectId}}
 
 ### Projects - Verificar proyecto eliminado
-GET {{baseUrl}}/projects/{{projectId}}
+GET {{baseUrl}}/project/{{projectId}}/info
 Authorization: Bearer {{anaToken}}

@@ -54,20 +54,20 @@ wrong-status resources.
 
 ## Endpoint naming
 
-Use plural nouns:
+Public business routes use singular resource roots, except the project list:
 
 ```text
 /projects
-/projects/{project_id}
-/projects/{project_id}/invites
-/projects/{project_id}/members
-/projects/{project_id}/documents
-/documents/{document_id}
-/documents/{document_id}/download
-/invites/accept
+/project
+/project/{project_id}/info
+/project/{project_id}/invite
+/project/{project_id}/members
+/project/{project_id}/documents
+/document/{document_id}
+/document/{document_id}/info
 ```
 
-Prefer `PATCH` for partial updates.
+Use `PATCH` for project info updates. Document renames use `PUT`.
 
 Avoid using `GET` for actions that create or modify state.
 
@@ -76,7 +76,7 @@ Avoid using `GET` for actions that create or modify state.
 Phase 4 local uploads use multipart form data:
 
 ```http
-POST /projects/{project_id}/documents
+POST /project/{project_id}/documents
 Content-Type: multipart/form-data
 ```
 
@@ -96,12 +96,12 @@ Supported file types:
 Projects have a configurable storage limit. Uploads that would exceed
 `PROJECT_STORAGE_LIMIT_BYTES` return `413 PROJECT_STORAGE_LIMIT_EXCEEDED`.
 
-`GET /documents/{document_id}` returns JSON metadata.
+`GET /document/{document_id}/info` returns JSON metadata.
 
 Rename a document:
 
 ```http
-PATCH /documents/{document_id}
+PUT /document/{document_id}
 Content-Type: application/json
 ```
 
@@ -111,13 +111,10 @@ Content-Type: application/json
 }
 ```
 
-`PUT /documents/{document_id}` remains available as a compatibility route for
-the same rename payload.
-
 Phase 4 local downloads use direct backend file responses:
 
 ```http
-GET /documents/{document_id}/download
+GET /document/{document_id}
 ```
 
 The download endpoint returns file bytes, not JSON, after the same project-access
@@ -133,7 +130,7 @@ it does not call MinIO-specific APIs.
 Start an upload:
 
 ```http
-POST /projects/{project_id}/documents/presign-upload
+POST /project/{project_id}/documents/presign-upload
 Content-Type: application/json
 ```
 
@@ -154,7 +151,7 @@ would exceed the project storage limit.
 Complete an upload after the client PUTs the object:
 
 ```http
-POST /projects/{project_id}/documents/complete-upload
+POST /project/{project_id}/documents/complete-upload
 Content-Type: application/json
 ```
 
@@ -184,7 +181,29 @@ notifications.
 Get a presigned download URL:
 
 ```http
-GET /documents/{document_id}/download-url
+GET /document/{document_id}/download-url
 ```
 
 The response is JSON with `download_url` and `expires_in`.
+
+## Project list
+
+`GET /projects` returns accessible project details plus document names only:
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Project Alpha",
+    "description": "Initial description",
+    "owner_id": 1,
+    "total_size_bytes": 1234,
+    "documents_count": 1,
+    "created_at": "2026-06-03T00:00:00Z",
+    "updated_at": "2026-06-03T00:00:00Z",
+    "documents": ["contract.pdf"]
+  }
+]
+```
+
+`documents` contains uploaded document filenames only, not document metadata.

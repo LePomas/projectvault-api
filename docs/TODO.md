@@ -1,63 +1,27 @@
 # TODO
 
-This checklist tracks the desired functionality and API shape. The current code
-uses the canonical plural routes documented in `docs/API_CONVENTIONS.md`; route
-aliases listed here are backlog items unless already present.
+This table tracks desired route and behavior status. `matching route` and
+`matching or improves behavior` use only `YES` or `NO`.
 
-## Desired functionality
-
-- [x] User login/auth
-- [x] Create/Delete projects
-- [x] Add/Update project's info/details - name, description
-- [x] Add/Update/Remove projects documents (docx, pdf)
-- [x] Share project with other users to access
-
-## Desired API
-
-- [ ] `POST /auth` - Create user (login, password, repeat password)
-  - Current equivalent: `POST /auth/register` with `login`, `email`, and
-    `password`.
-- [ ] `POST /login` - Login into service (login, password)
-  - Current equivalent: `POST /auth/login`.
-- [x] `POST /projects` - Create project from details (name, description).
-  Automatically gives access to created project to user, making him the owner
-  (admin of the project).
-- [ ] `GET /projects` - Get all projects, accessible for a user. Returns list
-  of projects full info(details + documents).
-  - Current response contains project details and document totals; full document
-    metadata is available through `GET /projects/{project_id}/documents`.
-- [ ] `GET /project/<project_id>/info` - Return project's details, if user has
-  access.
-  - Current equivalent: `GET /projects/{project_id}`.
-- [ ] `PUT /project/<project_id>/info` - Update projects details - name,
-  description. Returns the updated project's info.
-  - Current equivalent: `PATCH /projects/{project_id}`.
-- [ ] `DELETE /project/<project_id>` - Delete project, can only be performed by
-  the projects' owner. Deletes the corresponding documents.
-  - Current equivalent: `DELETE /projects/{project_id}`. Project delete is
-    owner-only and currently soft-deletes the project.
-- [x] `GET /project/<project_id>/documents` - Return all of the project's
-  documents.
-  - Current route: `GET /projects/{project_id}/documents`.
-- [x] `POST /project/<project_id>/documents` - Upload document/documents for a
-  specific project.
-  - Current route: `POST /projects/{project_id}/documents` for one multipart
-    file, plus S3-compatible presigned upload endpoints.
-- [x] `GET /document/<document_id>` - Download document, if the user has access
-  to the corresponding project.
-  - Current metadata route: `GET /documents/{document_id}`.
-  - Current local download route: `GET /documents/{document_id}/download`.
-  - Current presigned download route: `GET /documents/{document_id}/download-url`.
-- [x] `PUT /document/<document_id>` - Update document.
-  - Current route: `PUT /documents/{document_id}` remains as rename
-    compatibility; preferred route is `PATCH /documents/{document_id}`.
-- [x] `DELETE /document/<document_id>` - Delete document and remove it from the
-  corresponding project.
-  - Current route: `DELETE /documents/{document_id}`. Document delete is
-    owner-only.
-- [ ] `POST /project/<project_id>/invite?user=<login>` - Grant access to the
-  project for a specific user. If the request is not coming from the owner of
-  the project, results in error. Granting access gives participant permissions
-  to receiving user.
-  - Current flow: `POST /projects/{project_id}/invites` creates an invite token,
-    then `POST /invites/accept` accepts it.
+| Desired item | Current implementation | matching route | matching or improves behavior | TODO left |
+| --- | --- | --- | --- | --- |
+| `POST /auth/register` creates a user with login, email, password, and repeat password | `POST /auth/register` | YES | YES | None |
+| `POST /auth/login` logs in with login and password | `POST /auth/login` | YES | YES | None |
+| `GET /auth/me` returns the authenticated user | `GET /auth/me` | YES | YES | None |
+| `GET /projects` returns accessible project fields plus document filename arrays | `GET /projects` | YES | YES | None |
+| `POST /project` creates a project and makes caller owner | `POST /project` | YES | YES | None |
+| `GET /project/{project_id}/info` returns project info for members | `GET /project/{project_id}/info` | YES | YES | None |
+| `PATCH /project/{project_id}/info` updates project name and description | `PATCH /project/{project_id}/info` | YES | YES | None |
+| `DELETE /project/{project_id}` deletes project, owner-only | `DELETE /project/{project_id}` | YES | YES | None |
+| `GET /project/{project_id}/members` lists project members | `GET /project/{project_id}/members` | YES | YES | None |
+| `DELETE /project/{project_id}/members/{user_id}` removes a participant | `DELETE /project/{project_id}/members/{user_id}` | YES | YES | None |
+| `POST /project/{project_id}/invite?user={login}` grants participant access immediately | `POST /project/{project_id}/invite?user={login}` | YES | YES | None |
+| `GET /project/{project_id}/documents` lists uploaded project documents | `GET /project/{project_id}/documents` | YES | YES | None |
+| `POST /project/{project_id}/documents` uploads one document | `POST /project/{project_id}/documents` | YES | YES | None |
+| `POST /project/{project_id}/documents/presign-upload` starts a presigned upload | `POST /project/{project_id}/documents/presign-upload` | YES | YES | None |
+| `POST /project/{project_id}/documents/complete-upload` completes a presigned upload | `POST /project/{project_id}/documents/complete-upload` | YES | YES | None |
+| `GET /document/{document_id}` downloads document bytes | `GET /document/{document_id}` | YES | YES | None |
+| `GET /document/{document_id}/info` returns document metadata | `GET /document/{document_id}/info` | YES | YES | None |
+| `GET /document/{document_id}/download-url` returns a presigned download URL | `GET /document/{document_id}/download-url` | YES | YES | None |
+| `PUT /document/{document_id}` updates document metadata | `PUT /document/{document_id}` | YES | YES | None |
+| `DELETE /document/{document_id}` deletes a document, owner-only | `DELETE /document/{document_id}` | YES | YES | None |

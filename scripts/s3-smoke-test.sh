@@ -80,7 +80,7 @@ echo "Registering smoke-test user: $LOGIN"
 register_response="$(
   api_request POST "/auth/register" \
     -H "Content-Type: application/json" \
-    -d "{\"login\":\"$LOGIN\",\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}"
+    -d "{\"login\":\"$LOGIN\",\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"repeat_password\":\"$PASSWORD\"}"
 )"
 print_json_or_raw "$register_response"
 
@@ -94,7 +94,7 @@ TOKEN="$(require_json_field "$login_response" ".access_token")"
 
 echo "Creating project..."
 project_response="$(
-  api_request POST "/projects" \
+  api_request POST "/project" \
     -H "Authorization: Bearer $TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"name":"S3 Smoke Test","description":"Testing AWS S3 presigned upload"}'
@@ -104,7 +104,7 @@ print_json_or_raw "$project_response"
 
 echo "Requesting presigned upload URL..."
 PRESIGN="$(
-  api_request POST "/projects/$PROJECT_ID/documents/presign-upload" \
+  api_request POST "/project/$PROJECT_ID/documents/presign-upload" \
     -H "Authorization: Bearer $TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"filename":"smoke.pdf","content_type":"application/pdf"}'
@@ -132,7 +132,7 @@ echo "Upload returned HTTP 200."
 
 echo "Completing upload in API..."
 complete_response="$(
-  api_request POST "/projects/$PROJECT_ID/documents/complete-upload" \
+  api_request POST "/project/$PROJECT_ID/documents/complete-upload" \
     -H "Authorization: Bearer $TOKEN" \
     -H "Content-Type: application/json" \
     -d "{\"document_id\":$DOCUMENT_ID}"
@@ -147,7 +147,7 @@ fi
 
 echo "Requesting presigned download URL..."
 DOWNLOAD="$(
-  api_request GET "/documents/$DOCUMENT_ID/download-url" \
+  api_request GET "/document/$DOCUMENT_ID/download-url" \
     -H "Authorization: Bearer $TOKEN"
 )"
 print_json_or_raw "$DOWNLOAD"

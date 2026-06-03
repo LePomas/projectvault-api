@@ -59,10 +59,10 @@ if "/auth/register" in url:
 elif "/auth/login" in url:
     write_response(output_file, '{"access_token":"test-token"}')
     print("200", end="")
-elif url.endswith("/projects"):
+elif url.endswith("/project"):
     write_response(output_file, '{"id":1,"name":"S3 Event Smoke Test"}')
     print("201", end="")
-elif "/projects/1/documents/presign-upload" in url:
+elif "/project/1/documents/presign-upload" in url:
     if MODE == "presign_error":
         write_response(output_file, "Internal Server Error")
         print("500", end="")
@@ -76,20 +76,20 @@ elif "/projects/1/documents/presign-upload" in url:
             '"expires_in":900}',
         )
         print("201", end="")
-elif "/projects/1/documents/complete-upload" in url:
+elif "/project/1/documents/complete-upload" in url:
     write_response(output_file, "complete-upload should not be called")
     print("500", end="")
 elif url == "https://projectvault-documents.s3.amazonaws.com/upload":
     write_response(output_file, "")
     print("200", end="")
-elif "/documents/1/download-url" in url:
+elif "/document/1/download-url" in url:
     write_response(
         output_file,
         '{"download_url":"https://projectvault-documents.s3.amazonaws.com/download",'
         '"expires_in":900}',
     )
     print("200", end="")
-elif "/documents/1" in url:
+elif "/document/1" in url:
     write_response(
         output_file,
         '{"id":1,"status":"uploaded","size_bytes":26,'
@@ -179,8 +179,7 @@ def test_s3_event_smoke_script_reports_presign_errors(tmp_path: Path) -> None:
 
     assert result.returncode == 1
     assert (
-        "API request failed: POST /projects/1/documents/presign-upload "
-        "returned HTTP 500"
+        "API request failed: POST /project/1/documents/presign-upload returned HTTP 500"
     ) in result.stderr
     assert "Internal Server Error" in result.stderr
     assert "jq: parse error" not in result.stderr

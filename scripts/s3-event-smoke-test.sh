@@ -84,7 +84,7 @@ echo "Registering event smoke-test user: $LOGIN"
 register_response="$(
   api_request POST "/auth/register" \
     -H "Content-Type: application/json" \
-    -d "{\"login\":\"$LOGIN\",\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}"
+    -d "{\"login\":\"$LOGIN\",\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"repeat_password\":\"$PASSWORD\"}"
 )"
 print_json_or_raw "$register_response"
 
@@ -98,7 +98,7 @@ TOKEN="$(require_json_field "$login_response" ".access_token")"
 
 echo "Creating project..."
 project_response="$(
-  api_request POST "/projects" \
+  api_request POST "/project" \
     -H "Authorization: Bearer $TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"name":"S3 Event Smoke Test","description":"Testing S3 event finalization"}'
@@ -111,7 +111,7 @@ SMOKE_SIZE="$(wc -c <"$SMOKE_FILE" | tr -d ' ')"
 
 echo "Requesting presigned upload URL..."
 PRESIGN="$(
-  api_request POST "/projects/$PROJECT_ID/documents/presign-upload" \
+  api_request POST "/project/$PROJECT_ID/documents/presign-upload" \
     -H "Authorization: Bearer $TOKEN" \
     -H "Content-Type: application/json" \
     -d "{\"filename\":\"event-smoke.pdf\",\"content_type\":\"application/pdf\",\"size_bytes\":$SMOKE_SIZE}"
@@ -160,7 +160,7 @@ fi
 
 echo "Reading document metadata after event..."
 document_response="$(
-  api_request GET "/documents/$DOCUMENT_ID" \
+  api_request GET "/document/$DOCUMENT_ID/info" \
     -H "Authorization: Bearer $TOKEN"
 )"
 print_json_or_raw "$document_response"
@@ -178,7 +178,7 @@ fi
 
 echo "Requesting presigned download URL..."
 DOWNLOAD="$(
-  api_request GET "/documents/$DOCUMENT_ID/download-url" \
+  api_request GET "/document/$DOCUMENT_ID/download-url" \
     -H "Authorization: Bearer $TOKEN"
 )"
 print_json_or_raw "$DOWNLOAD"
