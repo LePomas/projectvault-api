@@ -35,28 +35,6 @@ class DocumentRepository:
         self.db.flush()
         return document
 
-    def get_accessible_pending_for_project(
-        self,
-        *,
-        document_id: int,
-        project_id: int,
-        user_id: int,
-    ) -> Document | None:
-        statement = (
-            select(Document)
-            .join(Project, Project.id == Document.project_id)
-            .join(ProjectMember, ProjectMember.project_id == Project.id)
-            .where(
-                Document.id == document_id,
-                Document.project_id == project_id,
-                ProjectMember.user_id == user_id,
-                Project.deleted_at.is_(None),
-                Document.deleted_at.is_(None),
-                Document.status.in_(("pending_upload", "uploaded")),
-            )
-        )
-        return self.db.scalar(statement)
-
     def get_by_storage_key(self, storage_key: str) -> Document | None:
         statement = (
             select(Document)
@@ -64,6 +42,25 @@ class DocumentRepository:
             .where(
                 Document.storage_key == storage_key,
                 Project.deleted_at.is_(None),
+            )
+        )
+        return self.db.scalar(statement)
+
+    def get_active_pending_for_project(
+        self,
+        *,
+        document_id: int,
+        project_id: int,
+    ) -> Document | None:
+        statement = (
+            select(Document)
+            .join(Project, Project.id == Document.project_id)
+            .where(
+                Document.id == document_id,
+                Document.project_id == project_id,
+                Project.deleted_at.is_(None),
+                Document.deleted_at.is_(None),
+                Document.status.in_(("pending_upload", "uploaded")),
             )
         )
         return self.db.scalar(statement)
@@ -88,18 +85,15 @@ class DocumentRepository:
         )
         return list(self.db.scalars(statement).all())
 
-    def get_accessible_by_id(
+    def get_uploaded_by_id(
         self,
         document_id: int,
-        user_id: int,
     ) -> Document | None:
         statement = (
             select(Document)
             .join(Project, Project.id == Document.project_id)
-            .join(ProjectMember, ProjectMember.project_id == Project.id)
             .where(
                 Document.id == document_id,
-                ProjectMember.user_id == user_id,
                 Project.deleted_at.is_(None),
                 Document.deleted_at.is_(None),
                 Document.status == "uploaded",

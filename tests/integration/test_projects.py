@@ -122,7 +122,7 @@ async def test_list_projects_returns_only_accessible_projects(
     assert [project["id"] for project in response.json()] == [ana_project["id"]]
 
 
-async def test_get_project_hides_inaccessible_project(
+async def test_get_project_forbids_inaccessible_project(
     client: AsyncClient,
 ) -> None:
     ana_token = await register_and_login(client, "ana", "ana@example.com")
@@ -134,8 +134,8 @@ async def test_get_project_hides_inaccessible_project(
         headers=bearer(bob_token),
     )
 
-    assert response.status_code == 404
-    assert response.json()["error"]["code"] == "PROJECT_NOT_FOUND"
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "PROJECT_FORBIDDEN"
 
 
 async def test_owner_and_participant_can_update_project(
@@ -207,7 +207,8 @@ async def test_only_owner_can_soft_delete_project(
     list_response = await client.get("/projects", headers=bearer(owner_token))
 
     saved_project = db_session.get(Project, project["id"])
-    assert participant_response.status_code == 404
+    assert participant_response.status_code == 403
+    assert participant_response.json()["error"]["code"] == "PROJECT_FORBIDDEN"
     assert owner_response.status_code == 204
     assert detail_response.status_code == 404
     assert list_response.status_code == 200
@@ -404,8 +405,8 @@ async def test_participant_cannot_invite_members(client: AsyncClient) -> None:
         json={"login": "third", "role": "participant"},
     )
 
-    assert response.status_code == 404
-    assert response.json()["error"]["code"] == "PROJECT_NOT_FOUND"
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "PROJECT_FORBIDDEN"
 
 
 async def test_non_member_cannot_invite_or_list_members(client: AsyncClient) -> None:
@@ -424,10 +425,10 @@ async def test_non_member_cannot_invite_or_list_members(client: AsyncClient) -> 
         headers=bearer(outsider_token),
     )
 
-    assert invite_response.status_code == 404
-    assert invite_response.json()["error"]["code"] == "PROJECT_NOT_FOUND"
-    assert members_response.status_code == 404
-    assert members_response.json()["error"]["code"] == "PROJECT_NOT_FOUND"
+    assert invite_response.status_code == 403
+    assert invite_response.json()["error"]["code"] == "PROJECT_FORBIDDEN"
+    assert members_response.status_code == 403
+    assert members_response.json()["error"]["code"] == "PROJECT_FORBIDDEN"
 
 
 async def test_invite_rejects_duplicate_pending_invite(client: AsyncClient) -> None:
@@ -548,8 +549,8 @@ async def test_owner_can_remove_participant(client: AsyncClient) -> None:
     )
 
     assert response.status_code == 204
-    assert removed_access_response.status_code == 404
-    assert removed_access_response.json()["error"]["code"] == "PROJECT_NOT_FOUND"
+    assert removed_access_response.status_code == 403
+    assert removed_access_response.json()["error"]["code"] == "PROJECT_FORBIDDEN"
 
 
 async def test_participant_cannot_remove_members(client: AsyncClient) -> None:
@@ -573,8 +574,8 @@ async def test_participant_cannot_remove_members(client: AsyncClient) -> None:
         headers=bearer(participant_token),
     )
 
-    assert response.status_code == 404
-    assert response.json()["error"]["code"] == "PROJECT_NOT_FOUND"
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "PROJECT_FORBIDDEN"
 
 
 async def test_owner_cannot_remove_owner_membership(client: AsyncClient) -> None:
@@ -586,8 +587,8 @@ async def test_owner_cannot_remove_owner_membership(client: AsyncClient) -> None
         headers=bearer(owner_token),
     )
 
-    assert response.status_code == 404
-    assert response.json()["error"]["code"] == "PROJECT_NOT_FOUND"
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "PROJECT_FORBIDDEN"
 
 
 async def test_project_member_endpoints_require_authentication(
@@ -652,11 +653,11 @@ async def test_outsider_cannot_update_or_delete_project(client: AsyncClient) -> 
         headers=bearer(outsider_token),
     )
 
-    assert update_response.status_code == 404
-    assert update_response.json()["error"]["code"] == "PROJECT_NOT_FOUND"
+    assert update_response.status_code == 403
+    assert update_response.json()["error"]["code"] == "PROJECT_FORBIDDEN"
     assert update_response.json()["error"]["details"] is None
-    assert delete_response.status_code == 404
-    assert delete_response.json()["error"]["code"] == "PROJECT_NOT_FOUND"
+    assert delete_response.status_code == 403
+    assert delete_response.json()["error"]["code"] == "PROJECT_FORBIDDEN"
     assert delete_response.json()["error"]["details"] is None
 
 

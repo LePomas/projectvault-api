@@ -25,6 +25,7 @@ ALLOWED_DOCUMENT_TYPES = {
     ".pdf": "application/pdf",
     ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
+OWNER_ROLE = "owner"
 
 
 @dataclass(frozen=True)
@@ -65,9 +66,7 @@ class DocumentService:
         file: UploadFile,
         current_user: User,
     ) -> Document:
-        project = self.projects.get_accessible_by_id(project_id, current_user.id)
-        if project is None:
-            raise self._project_not_found()
+        project = self._get_accessible_project(project_id, current_user)
 
         filename = self._validate_upload(file)
         size_bytes = self._source_size(file.file)
@@ -108,9 +107,7 @@ class DocumentService:
         payload: DocumentPresignUploadRequest,
         current_user: User,
     ) -> DocumentPresignUploadRead:
-        project = self.projects.get_accessible_by_id(project_id, current_user.id)
-        if project is None:
-            raise self._project_not_found()
+        project = self._get_accessible_project(project_id, current_user)
 
         filename = self._validate_file_metadata(
             payload.filename,
@@ -155,13 +152,14 @@ class DocumentService:
         payload: DocumentCompleteUploadRequest,
         current_user: User,
     ) -> Document:
-        document = self.documents.get_accessible_pending_for_project(
+        document = self.documents.get_active_pending_for_project(
             document_id=payload.document_id,
             project_id=project_id,
-            user_id=current_user.id,
         )
         if document is None:
             raise self._document_not_found()
+        if self.projects.get_member(project_id, current_user.id) is None:
+            raise self._document_forbidden()
         if document.status == "uploaded":
             return document
 
@@ -263,15 +261,15 @@ class DocumentService:
             ) from exc
 
     def list_for_project(self, project_id: int, current_user: User) -> list[Document]:
-        project = self.projects.get_accessible_by_id(project_id, current_user.id)
-        if project is None:
-            raise self._project_not_found()
+        self._get_accessible_project(project_id, current_user)
         return self.documents.list_for_accessible_project(project_id, current_user.id)
 
     def get(self, document_id: int, current_user: User) -> Document:
-        document = self.documents.get_accessible_by_id(document_id, current_user.id)
+        document = self.documents.get_uploaded_by_id(document_id)
         if document is None:
             raise self._document_not_found()
+        if self.projects.get_member(document.project_id, current_user.id) is None:
+            raise self._document_forbidden()
         return document
 
     def download(self, document_id: int, current_user: User) -> DocumentDownload:
@@ -319,9 +317,11 @@ class DocumentService:
 
     def delete(self, document_id: int, current_user: User) -> None:
         document = self.get(document_id, current_user)
+        member = self.projects.get_member(document.project_id, current_user.id)
+        if member is None or member.role != OWNER_ROLE:
+            raise self._document_forbidden()
+
         project = document.project
-        count_delta = -1 if document.status == "uploaded" else 0
-        size_delta = -document.size_bytes if document.status == "uploaded" else 0
 
         try:
             self.storage.delete(document.storage_key)
@@ -332,10 +332,18 @@ class DocumentService:
         self.documents.soft_delete(document)
         self.projects.adjust_document_totals(
             project,
-            count_delta=count_delta,
-            size_delta=size_delta,
+            count_delta=-1,
+            size_delta=-document.size_bytes,
         )
         self.db.commit()
+
+    def _get_accessible_project(self, project_id: int, current_user: User) -> Project:
+        project = self.projects.get_active_by_id(project_id)
+        if project is None:
+            raise self._project_not_found()
+        if self.projects.get_member(project_id, current_user.id) is None:
+            raise self._project_forbidden()
+        return project
 
     @staticmethod
     def _validate_upload(file: UploadFile) -> str:
@@ -386,11 +394,27 @@ class DocumentService:
         )
 
     @staticmethod
+    def _project_forbidden() -> AppError:
+        return AppError(
+            status_code=403,
+            code="PROJECT_FORBIDDEN",
+            message="You do not have permission to access this project.",
+        )
+
+    @staticmethod
     def _document_not_found() -> AppError:
         return AppError(
             status_code=404,
             code="DOCUMENT_NOT_FOUND",
             message="Document not found.",
+        )
+
+    @staticmethod
+    def _document_forbidden() -> AppError:
+        return AppError(
+            status_code=403,
+            code="DOCUMENT_FORBIDDEN",
+            message="You do not have permission to access this document.",
         )
 
     @staticmethod

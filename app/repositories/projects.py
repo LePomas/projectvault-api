@@ -54,15 +54,10 @@ class ProjectRepository:
         )
         return list(self.db.scalars(statement).all())
 
-    def get_accessible_by_id(self, project_id: int, user_id: int) -> Project | None:
-        statement = (
-            select(Project)
-            .join(ProjectMember)
-            .where(
-                Project.id == project_id,
-                ProjectMember.user_id == user_id,
-                Project.deleted_at.is_(None),
-            )
+    def get_active_by_id(self, project_id: int) -> Project | None:
+        statement = select(Project).where(
+            Project.id == project_id,
+            Project.deleted_at.is_(None),
         )
         return self.db.scalar(statement)
 

@@ -57,9 +57,11 @@ class ProjectService:
         return self.projects.list_accessible(current_user.id)
 
     def get_accessible(self, project_id: int, current_user: User) -> Project:
-        project = self.projects.get_accessible_by_id(project_id, current_user.id)
+        project = self.projects.get_active_by_id(project_id)
         if project is None:
             raise self._not_found()
+        if self.projects.get_member(project_id, current_user.id) is None:
+            raise self._forbidden()
         return project
 
     def update(
@@ -87,10 +89,7 @@ class ProjectService:
             ) from exc
 
     def delete(self, project_id: int, current_user: User) -> None:
-        project = self.projects.get_accessible_by_id(project_id, current_user.id)
-        member = self.projects.get_member(project_id, current_user.id)
-        if project is None or member is None or member.role != OWNER_ROLE:
-            raise self._not_found()
+        project = self._require_owner(project_id, current_user)
 
         self.projects.soft_delete(project)
         self.db.commit()
@@ -218,17 +217,21 @@ class ProjectService:
     ) -> None:
         self._require_owner(project_id, current_user)
         member = self.projects.get_member(project_id, user_id)
-        if member is None or member.role != PARTICIPANT_ROLE:
+        if member is None:
             raise self._not_found()
+        if member.role != PARTICIPANT_ROLE:
+            raise self._forbidden()
 
         self.projects.delete_member(member)
         self.db.commit()
 
     def _require_owner(self, project_id: int, current_user: User) -> Project:
-        project = self.projects.get_accessible_by_id(project_id, current_user.id)
-        member = self.projects.get_member(project_id, current_user.id)
-        if project is None or member is None or member.role != OWNER_ROLE:
+        project = self.projects.get_active_by_id(project_id)
+        if project is None:
             raise self._not_found()
+        member = self.projects.get_member(project_id, current_user.id)
+        if member is None or member.role != OWNER_ROLE:
+            raise self._forbidden()
         return project
 
     @staticmethod
@@ -270,4 +273,12 @@ class ProjectService:
             status_code=404,
             code="PROJECT_NOT_FOUND",
             message="Project not found.",
+        )
+
+    @staticmethod
+    def _forbidden() -> AppError:
+        return AppError(
+            status_code=403,
+            code="PROJECT_FORBIDDEN",
+            message="You do not have permission to access this project.",
         )

@@ -296,8 +296,10 @@ async def test_delete_document_storage_failure_leaves_database_unchanged(
     assert unchanged_project.total_size_bytes == original_total_size_bytes
 
 
-async def test_participant_can_manage_project_documents(
+async def test_participant_can_manage_but_not_delete_project_documents(
     client: AsyncClient,
+    db_session: Session,
+    document_storage_path: Path,
 ) -> None:
     owner_token = await register_and_login(client, "owner", "owner@example.com")
     participant_token = await register_and_login(
@@ -344,7 +346,18 @@ async def test_participant_can_manage_project_documents(
     assert update_response.json()["filename"] == "participant-renamed.pdf"
     assert download_response.status_code == 200
     assert download_response.content == b"%PDF-1.7\nbody"
-    assert delete_response.status_code == 204
+    assert delete_response.status_code == 403
+    assert delete_response.json()["error"]["code"] == "DOCUMENT_FORBIDDEN"
+
+    db_session.expire_all()
+    saved_document = db_session.get(Document, document["id"])
+    saved_project = db_session.get(Project, project["id"])
+    assert saved_document is not None
+    assert saved_project is not None
+    assert saved_document.deleted_at is None
+    assert saved_document.status == "uploaded"
+    assert saved_project.documents_count == 1
+    assert stored_file(document_storage_path, document["storage_key"]).exists()
 
 
 async def test_upload_accepts_docx(client: AsyncClient) -> None:
@@ -599,7 +612,7 @@ async def test_complete_upload_requires_existing_s3_object(
     assert response.json()["error"]["code"] == "DOCUMENT_STORAGE_ERROR"
 
 
-async def test_presigned_document_endpoints_hide_inaccessible_documents(
+async def test_presigned_document_endpoints_forbid_inaccessible_documents(
     client: AsyncClient,
     fake_s3_storage: FakeS3Storage,
 ) -> None:
@@ -632,13 +645,13 @@ async def test_presigned_document_endpoints_hide_inaccessible_documents(
         headers=bearer(outsider_token),
     )
 
-    assert complete_response.status_code == 404
-    assert complete_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
-    assert download_url_response.status_code == 404
-    assert download_url_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
+    assert complete_response.status_code == 403
+    assert complete_response.json()["error"]["code"] == "DOCUMENT_FORBIDDEN"
+    assert download_url_response.status_code == 403
+    assert download_url_response.json()["error"]["code"] == "DOCUMENT_FORBIDDEN"
 
 
-async def test_document_endpoints_hide_inaccessible_documents(
+async def test_document_endpoints_forbid_inaccessible_documents(
     client: AsyncClient,
 ) -> None:
     owner_token = await register_and_login(client, "owner", "owner@example.com")
@@ -668,16 +681,16 @@ async def test_document_endpoints_hide_inaccessible_documents(
         headers=bearer(outsider_token),
     )
 
-    assert list_response.status_code == 404
-    assert list_response.json()["error"]["code"] == "PROJECT_NOT_FOUND"
-    assert read_response.status_code == 404
-    assert read_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
-    assert download_response.status_code == 404
-    assert download_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
-    assert update_response.status_code == 404
-    assert update_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
-    assert delete_response.status_code == 404
-    assert delete_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
+    assert list_response.status_code == 403
+    assert list_response.json()["error"]["code"] == "PROJECT_FORBIDDEN"
+    assert read_response.status_code == 403
+    assert read_response.json()["error"]["code"] == "DOCUMENT_FORBIDDEN"
+    assert download_response.status_code == 403
+    assert download_response.json()["error"]["code"] == "DOCUMENT_FORBIDDEN"
+    assert update_response.status_code == 403
+    assert update_response.json()["error"]["code"] == "DOCUMENT_FORBIDDEN"
+    assert delete_response.status_code == 403
+    assert delete_response.json()["error"]["code"] == "DOCUMENT_FORBIDDEN"
 
 
 async def test_upload_rejects_unsupported_extension_and_content_type(
