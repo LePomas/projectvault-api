@@ -15,7 +15,7 @@ on:
       - "AGENTS.md"
 
 jobs:
-  test:
+  backend:
     runs-on: ubuntu-latest
     
     steps:
@@ -63,3 +63,29 @@ jobs:
 
       - name: Validate Docker Compose config
         run: docker compose config
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '26'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck frontend
+        run: npm run typecheck
+
+      - name: Build frontend
+        run: npm run build
