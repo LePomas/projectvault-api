@@ -90,6 +90,7 @@ async def register_and_login(
             "login": login,
             "email": email,
             "password": "super-secret-123",
+            "repeat_password": "super-secret-123",
         },
     )
     response = await client.post(
@@ -110,7 +111,7 @@ async def create_project(
     name: str = "Project Alpha",
 ) -> dict:
     response = await client.post(
-        "/projects",
+        "/project",
         headers=bearer(token),
         json={"name": name, "description": "Initial description"},
     )
@@ -128,7 +129,7 @@ async def test_pending_uploads_hidden_from_list_documents(
 
     # Create pending upload
     presign_response = await client.post(
-        f"/projects/{project['id']}/documents/presign-upload",
+        f"/project/{project['id']}/documents/presign-upload",
         headers=bearer(token),
         json={"filename": "contract.pdf", "content_type": "application/pdf"},
     )
@@ -136,7 +137,7 @@ async def test_pending_uploads_hidden_from_list_documents(
 
     # List should not include pending document
     list_response = await client.get(
-        f"/projects/{project['id']}/documents",
+        f"/project/{project['id']}/documents",
         headers=bearer(token),
     )
     assert list_response.status_code == 200
@@ -153,7 +154,7 @@ async def test_pending_uploads_hidden_from_get_document(
 
     # Create pending upload
     presign_response = await client.post(
-        f"/projects/{project['id']}/documents/presign-upload",
+        f"/project/{project['id']}/documents/presign-upload",
         headers=bearer(token),
         json={"filename": "contract.pdf", "content_type": "application/pdf"},
     )
@@ -162,7 +163,7 @@ async def test_pending_uploads_hidden_from_get_document(
 
     # Direct GET should return 404
     get_response = await client.get(
-        f"/documents/{document_id}",
+        f"/document/{document_id}",
         headers=bearer(token),
     )
     assert get_response.status_code == 404
@@ -184,7 +185,7 @@ async def test_storage_limit_consistent_across_s3_uploads(
 
     # Try presigned upload that would exceed limit
     presign_response = await client.post(
-        f"/projects/{project['id']}/documents/presign-upload",
+        f"/project/{project['id']}/documents/presign-upload",
         headers=bearer(token),
         json={
             "filename": "large.pdf",

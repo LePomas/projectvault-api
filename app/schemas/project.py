@@ -27,6 +27,10 @@ class ProjectRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ProjectWithDocumentsRead(ProjectRead):
+    documents: list[str]
+
+
 class ProjectInviteCreate(BaseModel):
     login: str = Field(min_length=1, max_length=50)
     role: Literal["owner", "participant"]

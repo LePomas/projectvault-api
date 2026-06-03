@@ -85,6 +85,27 @@ class DocumentRepository:
         )
         return list(self.db.scalars(statement).all())
 
+    def list_uploaded_filenames_by_project_ids(
+        self,
+        project_ids: list[int],
+    ) -> list[tuple[int, str]]:
+        if not project_ids:
+            return []
+
+        statement = (
+            select(Document.project_id, Document.filename)
+            .where(
+                Document.project_id.in_(project_ids),
+                Document.deleted_at.is_(None),
+                Document.status == "uploaded",
+            )
+            .order_by(Document.created_at.desc(), Document.id.desc())
+        )
+        return [
+            (project_id, filename)
+            for project_id, filename in self.db.execute(statement)
+        ]
+
     def get_uploaded_by_id(
         self,
         document_id: int,

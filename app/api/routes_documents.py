@@ -63,7 +63,7 @@ class LocalFileResponse(Response):
 
 
 @router.post(
-    "/projects/{project_id}/documents",
+    "/project/{project_id}/documents",
     response_model=DocumentRead,
     status_code=status.HTTP_201_CREATED,
 )
@@ -77,7 +77,7 @@ async def upload_document(
 
 
 @router.post(
-    "/projects/{project_id}/documents/presign-upload",
+    "/project/{project_id}/documents/presign-upload",
     response_model=DocumentPresignUploadRead,
     status_code=status.HTTP_201_CREATED,
 )
@@ -91,7 +91,7 @@ async def presign_document_upload(
 
 
 @router.post(
-    "/projects/{project_id}/documents/complete-upload",
+    "/project/{project_id}/documents/complete-upload",
     response_model=DocumentRead,
     status_code=status.HTTP_201_CREATED,
 )
@@ -104,7 +104,7 @@ async def complete_document_upload(
     return DocumentService(db).complete_upload(project_id, payload, current_user)
 
 
-@router.get("/projects/{project_id}/documents", response_model=list[DocumentRead])
+@router.get("/project/{project_id}/documents", response_model=list[DocumentRead])
 async def list_project_documents(
     project_id: int,
     current_user: Annotated[User, Depends(get_current_user)],
@@ -113,16 +113,7 @@ async def list_project_documents(
     return DocumentService(db).list_for_project(project_id, current_user)
 
 
-@router.get("/documents/{document_id}", response_model=DocumentRead)
-async def get_document(
-    document_id: int,
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)],
-) -> Document:
-    return DocumentService(db).get(document_id, current_user)
-
-
-@router.get("/documents/{document_id}/download")
+@router.get("/document/{document_id}")
 async def download_document(
     document_id: int,
     current_user: Annotated[User, Depends(get_current_user)],
@@ -136,8 +127,17 @@ async def download_document(
     )
 
 
+@router.get("/document/{document_id}/info", response_model=DocumentRead)
+async def get_document_info(
+    document_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> Document:
+    return DocumentService(db).get(document_id, current_user)
+
+
 @router.get(
-    "/documents/{document_id}/download-url",
+    "/document/{document_id}/download-url",
     response_model=DocumentDownloadUrlRead,
 )
 async def get_document_download_url(
@@ -152,8 +152,7 @@ async def get_document_download_url(
     )
 
 
-@router.patch("/documents/{document_id}", response_model=DocumentRead)
-@router.put("/documents/{document_id}", response_model=DocumentRead)
+@router.put("/document/{document_id}", response_model=DocumentRead)
 async def update_document(
     document_id: int,
     payload: DocumentUpdate,
@@ -163,7 +162,7 @@ async def update_document(
     return DocumentService(db).update(document_id, payload, current_user)
 
 
-@router.delete("/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/document/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(
     document_id: int,
     current_user: Annotated[User, Depends(get_current_user)],

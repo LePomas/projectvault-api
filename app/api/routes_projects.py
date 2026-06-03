@@ -9,18 +9,22 @@ from app.models.project import Project
 from app.models.user import User
 from app.schemas.project import (
     ProjectCreate,
-    ProjectInviteCreate,
-    ProjectInviteRead,
     ProjectMemberRead,
     ProjectRead,
     ProjectUpdate,
+    ProjectWithDocumentsRead,
 )
 from app.services.project_service import ProjectService
 
-router = APIRouter(prefix="/projects", tags=["projects"])
+projects_router = APIRouter(prefix="/projects", tags=["projects"])
+project_router = APIRouter(prefix="/project", tags=["projects"])
 
 
-@router.post("", response_model=ProjectRead, status_code=status.HTTP_201_CREATED)
+@project_router.post(
+    "",
+    response_model=ProjectRead,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_project(
     payload: ProjectCreate,
     current_user: Annotated[User, Depends(get_current_user)],
@@ -29,16 +33,16 @@ async def create_project(
     return ProjectService(db).create(payload, current_user)
 
 
-@router.get("", response_model=list[ProjectRead])
+@projects_router.get("", response_model=list[ProjectWithDocumentsRead])
 async def list_projects(
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-) -> list[Project]:
-    return ProjectService(db).list_accessible(current_user)
+) -> list[ProjectWithDocumentsRead]:
+    return ProjectService(db).list_accessible_with_document_names(current_user)
 
 
-@router.get("/{project_id}", response_model=ProjectRead)
-async def get_project(
+@project_router.get("/{project_id}/info", response_model=ProjectRead)
+async def get_project_info(
     project_id: int,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
@@ -46,21 +50,41 @@ async def get_project(
     return ProjectService(db).get_accessible(project_id, current_user)
 
 
-@router.post(
-    "/{project_id}/invites",
-    response_model=ProjectInviteRead,
-    status_code=status.HTTP_201_CREATED,
-)
-async def invite_project_member(
+@project_router.patch("/{project_id}/info", response_model=ProjectRead)
+async def update_project_info(
     project_id: int,
-    payload: ProjectInviteCreate,
+    payload: ProjectUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-) -> ProjectInviteRead:
-    return ProjectService(db).invite_member(project_id, payload, current_user)
+) -> Project:
+    return ProjectService(db).update(project_id, payload, current_user)
 
 
-@router.get("/{project_id}/members", response_model=list[ProjectMemberRead])
+@project_router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project(
+    project_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> Response:
+    ProjectService(db).delete(project_id, current_user)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@project_router.post(
+    "/{project_id}/invite",
+    response_model=ProjectMemberRead,
+    status_code=status.HTTP_201_CREATED,
+)
+async def grant_project_participant(
+    project_id: int,
+    user: str,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> ProjectMemberRead:
+    return ProjectService(db).grant_participant(project_id, user, current_user)
+
+
+@project_router.get("/{project_id}/members", response_model=list[ProjectMemberRead])
 async def list_project_members(
     project_id: int,
     current_user: Annotated[User, Depends(get_current_user)],
@@ -69,7 +93,7 @@ async def list_project_members(
     return ProjectService(db).list_members(project_id, current_user)
 
 
-@router.delete(
+@project_router.delete(
     "/{project_id}/members/{user_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
@@ -80,24 +104,4 @@ async def remove_project_member(
     db: Annotated[Session, Depends(get_db)],
 ) -> Response:
     ProjectService(db).remove_member(project_id, user_id, current_user)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@router.patch("/{project_id}", response_model=ProjectRead)
-async def update_project(
-    project_id: int,
-    payload: ProjectUpdate,
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)],
-) -> Project:
-    return ProjectService(db).update(project_id, payload, current_user)
-
-
-@router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_project(
-    project_id: int,
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)],
-) -> Response:
-    ProjectService(db).delete(project_id, current_user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -32,6 +32,7 @@ async def register_and_login(
             "login": login,
             "email": email,
             "password": "super-secret-123",
+            "repeat_password": "super-secret-123",
         },
     )
     response = await client.post(
@@ -52,7 +53,7 @@ async def create_project(
     name: str = "Project Alpha",
 ) -> dict:
     response = await client.post(
-        "/projects",
+        "/project",
         headers=bearer(token),
         json={"name": name, "description": "Initial description"},
     )
@@ -63,22 +64,15 @@ async def create_project(
 async def add_participant(
     client: AsyncClient,
     owner_token: str,
-    participant_token: str,
     project_id: int,
     login: str,
 ) -> None:
-    invite_response = await client.post(
-        f"/projects/{project_id}/invites",
+    response = await client.post(
+        f"/project/{project_id}/invite",
         headers=bearer(owner_token),
-        json={"login": login, "role": "participant"},
+        params={"user": login},
     )
-    assert invite_response.status_code == 201
-    accept_response = await client.post(
-        "/invites/accept",
-        headers=bearer(participant_token),
-        json={"token": invite_response.json()["token"]},
-    )
-    assert accept_response.status_code == 201
+    assert response.status_code == 201
 
 
 async def upload_pdf(
@@ -89,7 +83,7 @@ async def upload_pdf(
     content: bytes = b"%PDF-1.7\nbody",
 ) -> dict:
     response = await client.post(
-        f"/projects/{project_id}/documents",
+        f"/project/{project_id}/documents",
         headers=bearer(token),
         files={"file": (filename, content, "application/pdf")},
     )
@@ -196,39 +190,39 @@ async def test_owner_can_upload_list_read_rename_and_delete_document(
     )
 
     list_response = await client.get(
-        f"/projects/{project['id']}/documents",
+        f"/project/{project['id']}/documents",
         headers=bearer(token),
     )
-    read_response = await client.get(
-        f"/documents/{document['id']}",
+    info_response = await client.get(
+        f"/document/{document['id']}/info",
         headers=bearer(token),
     )
     download_response = await client.get(
-        f"/documents/{document['id']}/download",
+        f"/document/{document['id']}",
         headers=bearer(token),
     )
-    update_response = await client.patch(
-        f"/documents/{document['id']}",
+    update_response = await client.put(
+        f"/document/{document['id']}",
         headers=bearer(token),
         json={"filename": "renamed.pdf"},
     )
     delete_response = await client.delete(
-        f"/documents/{document['id']}",
+        f"/document/{document['id']}",
         headers=bearer(token),
     )
-    deleted_read_response = await client.get(
-        f"/documents/{document['id']}",
+    deleted_info_response = await client.get(
+        f"/document/{document['id']}/info",
         headers=bearer(token),
     )
     deleted_download_response = await client.get(
-        f"/documents/{document['id']}/download",
+        f"/document/{document['id']}",
         headers=bearer(token),
     )
 
     assert list_response.status_code == 200
     assert [item["id"] for item in list_response.json()] == [document["id"]]
-    assert read_response.status_code == 200
-    assert read_response.json()["id"] == document["id"]
+    assert info_response.status_code == 200
+    assert info_response.json()["id"] == document["id"]
     assert download_response.status_code == 200
     assert download_response.content == b"%PDF-1.7\nbody"
     assert download_response.headers["content-type"] == "application/pdf"
@@ -238,8 +232,8 @@ async def test_owner_can_upload_list_read_rename_and_delete_document(
     assert update_response.status_code == 200
     assert update_response.json()["filename"] == "renamed.pdf"
     assert delete_response.status_code == 204
-    assert deleted_read_response.status_code == 404
-    assert deleted_read_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
+    assert deleted_info_response.status_code == 404
+    assert deleted_info_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
     assert deleted_download_response.status_code == 404
     assert deleted_download_response.json()["error"]["code"] == "DOCUMENT_NOT_FOUND"
     assert not stored_file(document_storage_path, document["storage_key"]).exists()
@@ -277,7 +271,7 @@ async def test_delete_document_storage_failure_leaves_database_unchanged(
     )
 
     delete_response = await client.delete(
-        f"/documents/{document['id']}",
+        f"/document/{document['id']}",
         headers=bearer(token),
     )
 
@@ -311,7 +305,6 @@ async def test_participant_can_manage_but_not_delete_project_documents(
     await add_participant(
         client,
         owner_token,
-        participant_token,
         project["id"],
         "participant",
     )
@@ -323,20 +316,20 @@ async def test_participant_can_manage_but_not_delete_project_documents(
         filename="participant.pdf",
     )
     list_response = await client.get(
-        f"/projects/{project['id']}/documents",
+        f"/project/{project['id']}/documents",
         headers=bearer(participant_token),
     )
-    update_response = await client.patch(
-        f"/documents/{document['id']}",
+    update_response = await client.put(
+        f"/document/{document['id']}",
         headers=bearer(participant_token),
         json={"filename": "participant-renamed.pdf"},
     )
     download_response = await client.get(
-        f"/documents/{document['id']}/download",
+        f"/document/{document['id']}",
         headers=bearer(participant_token),
     )
     delete_response = await client.delete(
-        f"/documents/{document['id']}",
+        f"/document/{document['id']}",
         headers=bearer(participant_token),
     )
 
@@ -365,7 +358,7 @@ async def test_upload_accepts_docx(client: AsyncClient) -> None:
     project = await create_project(client, token)
 
     response = await client.post(
-        f"/projects/{project['id']}/documents",
+        f"/project/{project['id']}/documents",
         headers=bearer(token),
         files={
             "file": (
@@ -386,7 +379,7 @@ async def test_put_document_rename_remains_supported(client: AsyncClient) -> Non
     document = await upload_pdf(client, token, project["id"])
 
     response = await client.put(
-        f"/documents/{document['id']}",
+        f"/document/{document['id']}",
         headers=bearer(token),
         json={"filename": "put-renamed.pdf"},
     )
@@ -405,7 +398,7 @@ async def test_download_missing_storage_file_returns_storage_error(
     stored_file(document_storage_path, document["storage_key"]).unlink()
 
     response = await client.get(
-        f"/documents/{document['id']}/download",
+        f"/document/{document['id']}",
         headers=bearer(token),
     )
 
@@ -431,7 +424,7 @@ async def test_local_upload_rejects_project_storage_limit(
     )
 
     response = await client.post(
-        f"/projects/{project['id']}/documents",
+        f"/project/{project['id']}/documents",
         headers=bearer(token),
         files={"file": ("second.pdf", b"abcdefg", "application/pdf")},
     )
@@ -462,7 +455,7 @@ async def test_presigned_upload_complete_and_download_url_update_document_totals
     project = await create_project(client, token)
 
     presign_response = await client.post(
-        f"/projects/{project['id']}/documents/presign-upload",
+        f"/project/{project['id']}/documents/presign-upload",
         headers=bearer(token),
         json={"filename": "contract.pdf", "content_type": "application/pdf"},
     )
@@ -486,17 +479,17 @@ async def test_presigned_upload_complete_and_download_url_update_document_totals
         content_type="application/pdf",
     )
     complete_response = await client.post(
-        f"/projects/{project['id']}/documents/complete-upload",
+        f"/project/{project['id']}/documents/complete-upload",
         headers=bearer(token),
         json={"document_id": presign_body["document_id"]},
     )
     second_complete_response = await client.post(
-        f"/projects/{project['id']}/documents/complete-upload",
+        f"/project/{project['id']}/documents/complete-upload",
         headers=bearer(token),
         json={"document_id": presign_body["document_id"]},
     )
     download_url_response = await client.get(
-        f"/documents/{presign_body['document_id']}/download-url",
+        f"/document/{presign_body['document_id']}/download-url",
         headers=bearer(token),
     )
 
@@ -525,7 +518,7 @@ async def test_presigned_upload_rejects_project_storage_limit_preflight(
     project = await create_project(client, token)
 
     response = await client.post(
-        f"/projects/{project['id']}/documents/presign-upload",
+        f"/project/{project['id']}/documents/presign-upload",
         headers=bearer(token),
         json={
             "filename": "contract.pdf",
@@ -555,7 +548,7 @@ async def test_complete_upload_rejects_project_storage_limit_and_deletes_object(
     token = await register_and_login(client, "owner", "owner@example.com")
     project = await create_project(client, token)
     presign_response = await client.post(
-        f"/projects/{project['id']}/documents/presign-upload",
+        f"/project/{project['id']}/documents/presign-upload",
         headers=bearer(token),
         json={"filename": "contract.pdf", "content_type": "application/pdf"},
     )
@@ -567,7 +560,7 @@ async def test_complete_upload_rejects_project_storage_limit_and_deletes_object(
     )
 
     response = await client.post(
-        f"/projects/{project['id']}/documents/complete-upload",
+        f"/project/{project['id']}/documents/complete-upload",
         headers=bearer(token),
         json={"document_id": body["document_id"]},
     )
@@ -595,14 +588,14 @@ async def test_complete_upload_requires_existing_s3_object(
     project = await create_project(client, token)
 
     presign_response = await client.post(
-        f"/projects/{project['id']}/documents/presign-upload",
+        f"/project/{project['id']}/documents/presign-upload",
         headers=bearer(token),
         json={"filename": "contract.pdf", "content_type": "application/pdf"},
     )
     assert presign_response.status_code == 201
 
     response = await client.post(
-        f"/projects/{project['id']}/documents/complete-upload",
+        f"/project/{project['id']}/documents/complete-upload",
         headers=bearer(token),
         json={"document_id": presign_response.json()["document_id"]},
     )
@@ -620,7 +613,7 @@ async def test_presigned_document_endpoints_forbid_inaccessible_documents(
     outsider_token = await register_and_login(client, "outsider", "out@example.com")
     project = await create_project(client, owner_token)
     presign_response = await client.post(
-        f"/projects/{project['id']}/documents/presign-upload",
+        f"/project/{project['id']}/documents/presign-upload",
         headers=bearer(owner_token),
         json={"filename": "contract.pdf", "content_type": "application/pdf"},
     )
@@ -630,18 +623,18 @@ async def test_presigned_document_endpoints_forbid_inaccessible_documents(
         StoredObjectMetadata(size_bytes=12, content_type="application/pdf")
     )
     await client.post(
-        f"/projects/{project['id']}/documents/complete-upload",
+        f"/project/{project['id']}/documents/complete-upload",
         headers=bearer(owner_token),
         json={"document_id": document_id},
     )
 
     complete_response = await client.post(
-        f"/projects/{project['id']}/documents/complete-upload",
+        f"/project/{project['id']}/documents/complete-upload",
         headers=bearer(outsider_token),
         json={"document_id": document_id},
     )
     download_url_response = await client.get(
-        f"/documents/{document_id}/download-url",
+        f"/document/{document_id}/download-url",
         headers=bearer(outsider_token),
     )
 
@@ -660,24 +653,24 @@ async def test_document_endpoints_forbid_inaccessible_documents(
     document = await upload_pdf(client, owner_token, project["id"])
 
     list_response = await client.get(
-        f"/projects/{project['id']}/documents",
+        f"/project/{project['id']}/documents",
         headers=bearer(outsider_token),
     )
     read_response = await client.get(
-        f"/documents/{document['id']}",
+        f"/document/{document['id']}/info",
         headers=bearer(outsider_token),
     )
     download_response = await client.get(
-        f"/documents/{document['id']}/download",
+        f"/document/{document['id']}",
         headers=bearer(outsider_token),
     )
-    update_response = await client.patch(
-        f"/documents/{document['id']}",
+    update_response = await client.put(
+        f"/document/{document['id']}",
         headers=bearer(outsider_token),
         json={"filename": "stolen.pdf"},
     )
     delete_response = await client.delete(
-        f"/documents/{document['id']}",
+        f"/document/{document['id']}",
         headers=bearer(outsider_token),
     )
 
@@ -700,12 +693,12 @@ async def test_upload_rejects_unsupported_extension_and_content_type(
     project = await create_project(client, token)
 
     extension_response = await client.post(
-        f"/projects/{project['id']}/documents",
+        f"/project/{project['id']}/documents",
         headers=bearer(token),
         files={"file": ("notes.txt", b"notes", "text/plain")},
     )
     content_type_response = await client.post(
-        f"/projects/{project['id']}/documents",
+        f"/project/{project['id']}/documents",
         headers=bearer(token),
         files={"file": ("contract.pdf", b"fake", "text/plain")},
     )
@@ -722,24 +715,23 @@ async def test_document_endpoints_require_authentication(
     client: AsyncClient,
 ) -> None:
     upload_response = await client.post(
-        "/projects/1/documents",
+        "/project/1/documents",
         files={"file": ("contract.pdf", b"%PDF", "application/pdf")},
     )
-    list_response = await client.get("/projects/1/documents")
-    read_response = await client.get("/documents/1")
-    download_response = await client.get("/documents/1/download")
-    download_url_response = await client.get("/documents/1/download-url")
+    list_response = await client.get("/project/1/documents")
+    read_response = await client.get("/document/1/info")
+    download_response = await client.get("/document/1")
+    download_url_response = await client.get("/document/1/download-url")
     presign_response = await client.post(
-        "/projects/1/documents/presign-upload",
+        "/project/1/documents/presign-upload",
         json={"filename": "contract.pdf", "content_type": "application/pdf"},
     )
     complete_response = await client.post(
-        "/projects/1/documents/complete-upload",
+        "/project/1/documents/complete-upload",
         json={"document_id": 1},
     )
-    patch_response = await client.patch("/documents/1", json={"filename": "x.pdf"})
-    put_response = await client.put("/documents/1", json={"filename": "x.pdf"})
-    delete_response = await client.delete("/documents/1")
+    put_response = await client.put("/document/1", json={"filename": "x.pdf"})
+    delete_response = await client.delete("/document/1")
 
     assert upload_response.status_code == 401
     assert upload_response.json()["error"]["code"] == "MISSING_TOKEN"
@@ -755,9 +747,28 @@ async def test_document_endpoints_require_authentication(
     assert presign_response.json()["error"]["code"] == "MISSING_TOKEN"
     assert complete_response.status_code == 401
     assert complete_response.json()["error"]["code"] == "MISSING_TOKEN"
-    assert patch_response.status_code == 401
-    assert patch_response.json()["error"]["code"] == "MISSING_TOKEN"
     assert put_response.status_code == 401
     assert put_response.json()["error"]["code"] == "MISSING_TOKEN"
     assert delete_response.status_code == 401
     assert delete_response.json()["error"]["code"] == "MISSING_TOKEN"
+
+
+async def test_old_plural_document_routes_are_removed(
+    client: AsyncClient,
+) -> None:
+    project_upload = await client.post(
+        "/projects/1/documents",
+        files={"file": ("contract.pdf", b"%PDF", "application/pdf")},
+    )
+    project_documents = await client.get("/projects/1/documents")
+    document_metadata = await client.get("/documents/1")
+    document_download = await client.get("/documents/1/download")
+    document_update = await client.put("/documents/1", json={"filename": "x.pdf"})
+    document_patch = await client.patch("/document/1", json={"filename": "x.pdf"})
+
+    assert project_upload.status_code == 404
+    assert project_documents.status_code == 404
+    assert document_metadata.status_code == 404
+    assert document_download.status_code == 404
+    assert document_update.status_code == 404
+    assert document_patch.status_code == 405
