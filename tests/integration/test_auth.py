@@ -18,7 +18,12 @@ async def register_user(
 ) -> dict:
     response = await client.post(
         "/auth/register",
-        json={"login": login, "email": email, "password": password},
+        json={
+            "login": login,
+            "email": email,
+            "password": password,
+            "repeat_password": password,
+        },
     )
     assert response.status_code == 201
     return response.json()
@@ -49,6 +54,7 @@ async def test_register_can_be_disabled(
             "login": "ana",
             "email": "ana@example.com",
             "password": "super-secret-123",
+            "repeat_password": "super-secret-123",
         },
     )
 
@@ -65,6 +71,7 @@ async def test_register_rejects_duplicate_login(client: AsyncClient) -> None:
             "login": "ana",
             "email": "different@example.com",
             "password": "super-secret-123",
+            "repeat_password": "super-secret-123",
         },
     )
 
@@ -81,11 +88,41 @@ async def test_register_rejects_duplicate_email(client: AsyncClient) -> None:
             "login": "different",
             "email": "ana@example.com",
             "password": "super-secret-123",
+            "repeat_password": "super-secret-123",
         },
     )
 
     assert response.status_code == 409
     assert response.json()["error"]["code"] == "USER_EMAIL_EXISTS"
+
+
+async def test_register_requires_repeat_password(client: AsyncClient) -> None:
+    response = await client.post(
+        "/auth/register",
+        json={
+            "login": "ana",
+            "email": "ana@example.com",
+            "password": "super-secret-123",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+async def test_register_rejects_mismatched_repeat_password(
+    client: AsyncClient,
+) -> None:
+    response = await client.post(
+        "/auth/register",
+        json={
+            "login": "ana",
+            "email": "ana@example.com",
+            "password": "super-secret-123",
+            "repeat_password": "different-secret-123",
+        },
+    )
+
+    assert response.status_code == 422
 
 
 async def test_login_returns_jwt_for_valid_credentials(client: AsyncClient) -> None:

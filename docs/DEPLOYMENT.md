@@ -143,7 +143,7 @@ Review smoke checks from an allowed source IP:
 curl https://api.lepomas.xyz/health
 curl -X POST https://api.lepomas.xyz/auth/register \
   -H 'Content-Type: application/json' \
-  -d '{"login":"mentor","email":"mentor@example.com","password":"super-secret-123"}'
+  -d '{"login":"mentor","email":"mentor@example.com","password":"super-secret-123","repeat_password":"super-secret-123"}'
 curl -X POST https://api.lepomas.xyz/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"login":"mentor","password":"super-secret-123"}'
