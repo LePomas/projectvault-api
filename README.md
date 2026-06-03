@@ -200,6 +200,12 @@ E2E tests wrap the local S3 smoke scripts and are skipped by default. They requi
 PROJECTVAULT_RUN_E2E=1 .venv/bin/python -m pytest -m e2e
 ```
 
+Current CI does not run e2e after push. To run e2e in GitHub Actions, add a
+dedicated job that starts the S3-backed Docker Compose stack, waits for API and
+MinIO readiness, sets `PROJECTVAULT_RUN_E2E=1`, runs `pytest -m e2e`, and tears
+the stack down. The current e2e scripts target a local Compose stack, not the
+deployed `https://api.lepomas.xyz` API.
+
 ## Database schema
 
 Docker Compose initializes a fresh local PostgreSQL volume from
@@ -262,7 +268,7 @@ docs/               Technical documentation
 frontend/           React/Vite mentor-review app
 ```
 
-## Initial setup status
+## Setup status
 
 * [x] Repository created
 * [x] Project structure created

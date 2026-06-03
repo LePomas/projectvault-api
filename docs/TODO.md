@@ -25,3 +25,16 @@ This table tracks desired route and behavior status. `matching route` and
 | `GET /document/{document_id}/download-url` returns a presigned download URL | `GET /document/{document_id}/download-url` | YES | YES | None |
 | `PUT /document/{document_id}` updates document metadata | `PUT /document/{document_id}` | YES | YES | None |
 | `DELETE /document/{document_id}` deletes a document, owner-only | `DELETE /document/{document_id}` | YES | YES | None |
+
+## Frontend deployment TODO
+
+| Area | Current state | Target | TODO left |
+| --- | --- | --- | --- |
+| Frontend live smoke testing | Local Vite app exists under `frontend/` | Browser-verified mentor flow against `https://api.lepomas.xyz` | Test register/login, JWT restore, `/auth/me`, project create/list/detail, member grant/list, and document upload/list/download |
+| Frontend automated tests | CI runs `npm run typecheck` and `npm run build` | First focused frontend test layer | Add tests for API client error handling and critical auth/project flows |
+| Browser e2e smoke | No browser e2e runner is configured | Opt-in smoke path for the mentor-review UI | Add Playwright or equivalent for auth, project, member, and document review flows |
+| Public frontend hosting | App runs locally on `http://localhost:3000` | AWS static hosting at `https://app.lepomas.xyz` | Create or wire precreated S3 and CloudFront resources for the Vite build output |
+| Frontend containerization | No frontend Dockerfile exists | Static hosting preferred | Add containerization only if the frontend is later hosted as an ECS/container service |
+| Frontend CI/CD deploy | CI builds frontend; deploy workflow is backend/Lambda only | Automated frontend deploy | Add build, S3 upload, CloudFront invalidation, and required GitHub production variables |
+| Backend CORS for public frontend | API allows `http://localhost:3000` | API also allows `https://app.lepomas.xyz` | Update `CORS_ALLOWED_ORIGINS` and redeploy the backend |
+| Mentor review readiness | API review ingress exists with ALB allowlist | Mentor can reach both frontend and API | Verify mentor IP allowlist, live API health, frontend load, and browser CORS before review |
