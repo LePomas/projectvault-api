@@ -134,7 +134,7 @@ function App() {
       <header className="topbar">
         <div>
           <p className="eyebrow">ProjectVault</p>
-          <h1>Mentor review console</h1>
+          <h1>ProjectVault demo console</h1>
         </div>
         <div className="api-status">
           <span>API</span>
