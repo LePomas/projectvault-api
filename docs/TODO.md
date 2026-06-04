@@ -32,7 +32,7 @@ This table tracks desired route and behavior status. `matching route` and
 | --- | --- | --- | --- |
 | Frontend live smoke testing | Browser-verified controlled demo flow against `https://api.lepomas.xyz` | Live smoke covers register/login, JWT restore, `/auth/me`, project create/list/detail, member grant/list, and document upload/list/download | None |
 | Frontend automated tests | Local Vitest DOM tests cover API client errors and critical auth/project/document flows | CI still runs `npm run typecheck` and `npm run build` | Wire `npm test` into CI after the frontend batch if desired |
-| Browser e2e smoke | No browser e2e runner is configured | Opt-in smoke path for the controlled demo UI | Add Playwright or equivalent for auth, project, member, and document review flows |
+| Browser e2e smoke | Opt-in local Playwright smoke covers auth, project, member, and document flows with mocked API responses | Keep browser e2e local-only until frontend deployment is ready | Wire into CI later only if runtime cost is acceptable |
 | Public frontend hosting | App runs locally on `http://localhost:3000` | AWS static hosting at `https://app.lepomas.xyz` | Create or wire precreated S3 and CloudFront resources for the Vite build output |
 | Frontend containerization | No frontend Dockerfile exists | Static hosting preferred | Add containerization only if the frontend is later hosted as an ECS/container service |
 | Frontend CI/CD deploy | CI builds frontend; deploy workflow is backend/Lambda only | Automated frontend deploy | Add build, S3 upload, CloudFront invalidation, and required GitHub production variables |

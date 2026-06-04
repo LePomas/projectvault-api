@@ -117,8 +117,14 @@ runtime. It defaults to the live demo API at `https://api.lepomas.xyz`.
 cd frontend
 npm install
 npm test
+npm run build
+npm run test:e2e
 npm run dev
 ```
+
+`npm run test:e2e` is an opt-in local browser smoke. It starts the built Vite
+preview server and mocks API responses in the browser; it is not wired into
+GitHub Actions.
 
 Open:
 

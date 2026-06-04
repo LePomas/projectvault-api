@@ -13,6 +13,7 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    exclude: ["e2e/**", "node_modules/**", "dist/**"],
     environmentOptions: {
       jsdom: {
         url: "http://localhost:3000",
