@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -29,25 +28,6 @@ class ProjectRead(BaseModel):
 
 class ProjectWithDocumentsRead(ProjectRead):
     documents: list[str]
-
-
-class ProjectInviteCreate(BaseModel):
-    login: str = Field(min_length=1, max_length=50)
-    role: Literal["owner", "participant"]
-
-
-class ProjectInviteRead(BaseModel):
-    id: int
-    project_id: int
-    invited_login: str
-    role: str
-    token: str
-    expires_at: datetime
-    created_at: datetime
-
-
-class ProjectInviteAccept(BaseModel):
-    token: str = Field(min_length=1)
 
 
 class ProjectMemberRead(BaseModel):

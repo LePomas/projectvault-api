@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.project import Project, ProjectInvite, ProjectMember
+from app.models.project import Project, ProjectMember
 from app.models.user import User
 
 
@@ -22,25 +22,6 @@ class ProjectRepository:
         self.db.add(member)
         self.db.flush()
         return member
-
-    def create_invite(
-        self,
-        project_id: int,
-        invited_login: str,
-        token_hash: str,
-        role: str,
-        expires_at: datetime,
-    ) -> ProjectInvite:
-        invite = ProjectInvite(
-            project_id=project_id,
-            invited_login=invited_login,
-            token_hash=token_hash,
-            role=role,
-            expires_at=expires_at,
-        )
-        self.db.add(invite)
-        self.db.flush()
-        return invite
 
     def list_accessible(self, user_id: int) -> list[Project]:
         statement = (
@@ -68,24 +49,6 @@ class ProjectRepository:
         )
         return self.db.scalar(statement)
 
-    def get_pending_invite(
-        self,
-        project_id: int,
-        invited_login: str,
-        now: datetime,
-    ) -> ProjectInvite | None:
-        statement = select(ProjectInvite).where(
-            ProjectInvite.project_id == project_id,
-            ProjectInvite.invited_login == invited_login,
-            ProjectInvite.accepted_at.is_(None),
-            ProjectInvite.expires_at > now,
-        )
-        return self.db.scalar(statement)
-
-    def get_invite_by_token_hash(self, token_hash: str) -> ProjectInvite | None:
-        statement = select(ProjectInvite).where(ProjectInvite.token_hash == token_hash)
-        return self.db.scalar(statement)
-
     def list_members(self, project_id: int) -> list[tuple[ProjectMember, User]]:
         statement = (
             select(ProjectMember, User)
@@ -98,15 +61,6 @@ class ProjectRepository:
     def delete_member(self, member: ProjectMember) -> None:
         self.db.delete(member)
         self.db.flush()
-
-    def mark_invite_accepted(
-        self,
-        invite: ProjectInvite,
-        accepted_at: datetime,
-    ) -> ProjectInvite:
-        invite.accepted_at = accepted_at
-        self.db.flush()
-        return invite
 
     def update(self, project: Project, fields: dict[str, str | None]) -> Project:
         for field, value in fields.items():
