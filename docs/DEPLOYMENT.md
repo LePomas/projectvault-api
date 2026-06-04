@@ -26,9 +26,9 @@ AWS deployment path:
   definition `projectvault-api`.
 - Done: image-based Lambda function `projectvault-documents`.
 - Done: first successful end-to-end GitHub Actions Deploy workflow run.
-- Planned for mentor review: HTTPS API ingress at `api.lepomas.xyz` through an
+- Planned for controlled demo review: HTTPS API ingress at `api.lepomas.xyz` through an
   Application Load Balancer restricted by source IP allowlist.
-- Done: local mentor-review frontend under `frontend/`.
+- Done: local controlled demo frontend under `frontend/`.
 - Pending: production frontend origin; CORS currently allows
   `http://localhost:3000`.
 - Pending: infrastructure-as-code for AWS resources.
@@ -80,7 +80,7 @@ S3_REGION
 it with the deployed frontend origin, for example `https://app.example.com`.
 
 `PUBLIC_REGISTRATION_ENABLED` defaults to `false` in the deployment workflow
-when the GitHub variable is not set. For the mentor-review demo environment, set
+when the GitHub variable is not set. For the controlled demo environment, set
 it to `true` only after HTTPS ingress is restricted to the approved source IPs.
 
 For the current production bucket, set:
@@ -133,7 +133,7 @@ When the frontend is deployed publicly, use `https://app.lepomas.xyz` and set
 the backend production `CORS_ALLOWED_ORIGINS` to include both
 `http://localhost:3000` and `https://app.lepomas.xyz`.
 
-## Mentor Review Ingress
+## Controlled Demo Ingress
 
 Expose the live API for review with a dedicated HTTPS hostname and network-level
 allowlist:
@@ -143,7 +143,7 @@ allowlist:
 2. Add the ACM DNS validation record in Cloudflare.
 3. Create an internet-facing Application Load Balancer with an HTTPS listener
    for the certificate and a target group for the existing ECS service.
-4. Allow inbound `443` on the ALB security group only from the mentor public
+4. Allow inbound `443` on the ALB security group only from the reviewer public
    IP/CIDR and the owner public IP/CIDR.
 5. Allow inbound API traffic on the ECS task security group only from the ALB
    security group.
@@ -159,10 +159,10 @@ Review smoke checks from an allowed source IP:
 curl https://api.lepomas.xyz/health
 curl -X POST https://api.lepomas.xyz/auth/register \
   -H 'Content-Type: application/json' \
-  -d '{"login":"mentor","email":"mentor@example.com","password":"super-secret-123","repeat_password":"super-secret-123"}'
+  -d '{"login":"demo-reviewer","email":"demo-reviewer@example.com","password":"super-secret-123","repeat_password":"super-secret-123"}'
 curl -X POST https://api.lepomas.xyz/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"login":"mentor","password":"super-secret-123"}'
+  -d '{"login":"demo-reviewer","password":"super-secret-123"}'
 ```
 
 From a non-allowed source IP, the API should be unreachable before FastAPI

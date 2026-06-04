@@ -15,7 +15,7 @@ Secure project profiles and document management API.
 - JWT authentication
 - S3 event handler for finalizing pending uploads
 - Alembic initial schema baseline
-- React and Vite frontend for mentor-review workflows
+- React and Vite frontend for controlled demo workflows
 - GitHub Actions CI for lint, format check, tests, and Compose validation
 - GitHub Actions CD workflow for precreated AWS ECS, ECR, and Lambda resources
 - pytest
@@ -108,10 +108,10 @@ container-image deployment through the CD workflow. The workflow updates an
 existing Lambda function; it does not create the function or S3 event
 notification.
 
-### 5. Frontend review app
+### 5. Frontend demo app
 
 The frontend lives under `frontend/` and is intentionally separate from the API
-runtime. It defaults to the live review API at `https://api.lepomas.xyz`.
+runtime. It defaults to the live demo API at `https://api.lepomas.xyz`.
 
 ```bash
 cd frontend
@@ -241,7 +241,7 @@ setup includes ECR repositories and images, a production S3 bucket with
 ObjectCreated notification, RDS PostgreSQL, Secrets Manager JWT and
 `DATABASE_URL` secrets, an ECS service, an image-based documents Lambda, GitHub
 OIDC trust, deployment role permissions, production GitHub variables, and one
-successful end-to-end Deploy workflow run. Mentor-review ingress is planned as
+successful end-to-end Deploy workflow run. Controlled demo ingress is planned as
 `https://api.lepomas.xyz` through an HTTPS Application Load Balancer restricted
 by source IP allowlist. A production frontend origin, infrastructure-as-code,
 and forward migrations after the baseline remain future work. See
@@ -265,7 +265,7 @@ db/
   init/             PostgreSQL bootstrap SQL
 tests/              Automated tests
 docs/               Technical documentation
-frontend/           React/Vite mentor-review app
+frontend/           React/Vite controlled demo app
 ```
 
 ## Setup status

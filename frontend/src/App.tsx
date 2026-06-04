@@ -197,7 +197,7 @@ function App() {
                 <h2>Select or create a project</h2>
                 <p>
                   Use this console to validate auth, project access, members, and
-                  document flows against the review API.
+                  document flows against the demo API.
                 </p>
               </div>
             )}
