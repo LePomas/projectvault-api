@@ -116,6 +116,7 @@ runtime. It defaults to the live demo API at `https://api.lepomas.xyz`.
 ```bash
 cd frontend
 npm install
+npm test
 npm run dev
 ```
 
