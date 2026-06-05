@@ -31,10 +31,9 @@ This table tracks desired route and behavior status. `matching route` and
 | Area | Current state | Target | TODO left |
 | --- | --- | --- | --- |
 | Frontend live smoke testing | Browser-verified controlled demo flow against `https://api.lepomas.xyz` | Live smoke covers register/login, JWT restore, `/auth/me`, project create/list/detail, member grant/list, and document upload/list/download | None |
-| Frontend automated tests | Local Vitest DOM tests cover API client errors and critical auth/project/document flows | CI still runs `npm run typecheck` and `npm run build` | Wire `npm test` into CI after the frontend batch if desired |
+| Frontend automated tests | CI runs Vitest, typecheck, and build for the frontend | Keep browser e2e opt-in/local for now | None |
 | Browser e2e smoke | Opt-in local Playwright smoke covers auth, project, member, and document flows with mocked API responses | Keep browser e2e local-only until frontend deployment is ready | Wire into CI later only if runtime cost is acceptable |
-| Public frontend hosting | App runs locally on `http://localhost:3000` | AWS static hosting at `https://app.lepomas.xyz` | Create or wire precreated S3 and CloudFront resources for the Vite build output |
-| Frontend containerization | No frontend Dockerfile exists | Static hosting preferred | Add containerization only if the frontend is later hosted as an ECS/container service |
-| Frontend CI/CD deploy | CI builds frontend; deploy workflow is backend/Lambda only | Automated frontend deploy | Add build, S3 upload, CloudFront invalidation, and required GitHub production variables |
-| Backend CORS for public frontend | API allows `http://localhost:3000` | API also allows `https://app.lepomas.xyz` | Update `CORS_ALLOWED_ORIGINS` and redeploy the backend |
+| Public frontend hosting | Static S3 and CloudFront hosting selected for `https://app.lepomas.xyz` | Precreated S3 bucket, CloudFront distribution, ACM certificate, and DNS-only Cloudflare record | Create or wire the AWS/Cloudflare resources before the first frontend deploy |
+| Frontend CI/CD deploy | Deploy workflow is ready to build, upload, and invalidate the frontend | Automated frontend deploy to S3 and CloudFront | Set frontend GitHub production variables, then run one cutover deploy |
+| Backend CORS for public frontend | API allows `http://localhost:3000` | API also allows `https://app.lepomas.xyz` | Update `CORS_ALLOWED_ORIGINS` production variable and redeploy the backend |
 | Controlled demo readiness | API demo ingress exists with ALB allowlist | Approved reviewer can reach both frontend and API | Verify reviewer IP allowlist, live API health, frontend load, and browser CORS before review |

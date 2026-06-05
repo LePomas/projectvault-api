@@ -233,15 +233,17 @@ baseline aligned when changing the schema.
 GitHub Actions CI is configured in `.github/workflows/ci.yml`. It installs the
 Python dependencies, runs Ruff linting, Ruff format check, unit tests,
 integration tests, and `docker compose config`. It also installs the frontend
-dependencies, runs the TypeScript check, and builds the Vite app.
+dependencies, runs the Vitest suite, runs the TypeScript check, and builds the
+Vite app.
 
 Live e2e smoke tests are not part of PR CI.
 
 GitHub Actions CD is defined in `.github/workflows/deploy.yml` for a precreated
 AWS environment. When the required AWS resources and GitHub variables exist, it
 builds and pushes the API image to ECR, deploys the API image to an existing ECS
-service, builds and pushes the documents Lambda image, and updates an existing
-Lambda function.
+service, builds and pushes the documents Lambda image, updates an existing
+Lambda function, builds the frontend, uploads `frontend/dist` to the frontend S3
+bucket, and invalidates the CloudFront distribution.
 
 The CD workflow does not provision AWS infrastructure. Current live deployment
 setup includes ECR repositories and images, a production S3 bucket with
@@ -250,8 +252,9 @@ ObjectCreated notification, RDS PostgreSQL, Secrets Manager JWT and
 OIDC trust, deployment role permissions, production GitHub variables, and one
 successful end-to-end Deploy workflow run. Controlled demo ingress is planned as
 `https://api.lepomas.xyz` through an HTTPS Application Load Balancer restricted
-by source IP allowlist. A production frontend origin, infrastructure-as-code,
-and forward migrations after the baseline remain future work. See
+by source IP allowlist. The frontend deploy path targets static S3 and
+CloudFront hosting at `https://app.lepomas.xyz`; infrastructure-as-code and
+forward migrations after the baseline remain future work. See
 `docs/DEPLOYMENT.md` for the current resources, variables, and live-review
 runbook.
 

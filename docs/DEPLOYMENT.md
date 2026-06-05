@@ -25,12 +25,14 @@ AWS deployment path:
 - Done: ECS cluster `projectvault-prod`, service `projectvault-api`, and task
   definition `projectvault-api`.
 - Done: image-based Lambda function `projectvault-documents`.
-- Done: first successful end-to-end GitHub Actions Deploy workflow run.
+- Done: first successful backend/Lambda GitHub Actions Deploy workflow run.
 - Planned for controlled demo review: HTTPS API ingress at `api.lepomas.xyz` through an
   Application Load Balancer restricted by source IP allowlist.
 - Done: local controlled demo frontend under `frontend/`.
-- Pending: production frontend origin; CORS currently allows
-  `http://localhost:3000`.
+- Planned for frontend: static S3 and CloudFront hosting at
+  `https://app.lepomas.xyz` with a DNS-only Cloudflare `CNAME`.
+- Pending: production frontend AWS resources and Cloudflare DNS; CORS currently
+  allows `http://localhost:3000`.
 - Pending: infrastructure-as-code for AWS resources.
 - Pending: app-level secret loading from Secrets Manager for Lambda. The current
   Lambda environment was manually configured with `DATABASE_URL` after function
@@ -47,8 +49,13 @@ The CD workflow expects these resources to exist before it runs:
 - RDS PostgreSQL database reachable from the ECS task and Lambda function.
 - S3 bucket for document storage.
 - S3 ObjectCreated notification that invokes the documents Lambda.
+- S3 bucket for frontend static assets.
+- CloudFront distribution for the frontend with `app.lepomas.xyz` as an
+  alternate domain name.
+- ACM certificate covering `app.lepomas.xyz` in `us-east-1` for CloudFront.
 - IAM role for GitHub OIDC with permissions to push both ECR images, describe
-  and deploy the ECS task definition, and update the Lambda function image.
+  and deploy the ECS task definition, update the Lambda function image, upload
+  frontend assets to S3, and create CloudFront invalidations.
 
 The ECS task definition contains production-only values that do not belong in
 GitHub, such as task roles, logging, networking, CPU/memory, and secret
@@ -73,11 +80,20 @@ PUBLIC_REGISTRATION_ENABLED
 PROJECT_STORAGE_LIMIT_BYTES
 S3_BUCKET
 S3_REGION
+FRONTEND_S3_BUCKET
+FRONTEND_CLOUDFRONT_DISTRIBUTION_ID
+VITE_PROJECTVAULT_API_BASE_URL
 ```
 
 `CORS_ALLOWED_ORIGINS` is a comma-separated list. It is currently set to
-`http://localhost:3000` for initial testing. When a frontend is deployed, replace
-it with the deployed frontend origin, for example `https://app.example.com`.
+`http://localhost:3000` for initial testing. For the frontend cutover, set it to
+`http://localhost:3000,https://app.lepomas.xyz`.
+
+Set:
+
+```text
+VITE_PROJECTVAULT_API_BASE_URL=https://api.lepomas.xyz
+```
 
 `PUBLIC_REGISTRATION_ENABLED` defaults to `false` in the deployment workflow
 when the GitHub variable is not set. For the controlled demo environment, set
@@ -99,6 +115,8 @@ S3_BUCKET=projectvault-prod-lepomas-681742559054-us-east-1-an
 4. Download the current ECS task definition, render the new API image into it,
    and deploy it to the existing ECS service.
 5. Update the documents Lambda function to the new Lambda image URI.
+6. Install frontend dependencies, run the frontend checks, build the Vite app,
+   upload `frontend/dist` to the frontend S3 bucket, and invalidate CloudFront.
 
 The workflow sets these runtime values for the API container:
 
@@ -132,6 +150,34 @@ The local app runs on `http://localhost:3000` and reads
 When the frontend is deployed publicly, use `https://app.lepomas.xyz` and set
 the backend production `CORS_ALLOWED_ORIGINS` to include both
 `http://localhost:3000` and `https://app.lepomas.xyz`.
+
+Frontend Docker/container hosting is intentionally not used. The Vite app is
+static, so the selected production path is S3 plus CloudFront.
+
+## Frontend DNS And Cutover
+
+Prepare these resources before the first frontend deploy workflow run:
+
+1. Create a private S3 bucket for the Vite build output with public access
+   blocked.
+2. Create a CloudFront distribution backed by that bucket, preferably through
+   origin access control.
+3. Request or attach an ACM certificate in `us-east-1` covering
+   `app.lepomas.xyz`.
+4. Add the ACM DNS validation CNAME in Cloudflare.
+5. Add `app.lepomas.xyz` as a CloudFront alternate domain name.
+6. Add a Cloudflare DNS-only `CNAME`:
+   - Name: `app`
+   - Target: the CloudFront distribution domain, for example
+     `dxxxxx.cloudfront.net`
+   - Proxy status: DNS only
+   - TTL: Auto
+7. Set the GitHub production variables `FRONTEND_S3_BUCKET`,
+   `FRONTEND_CLOUDFRONT_DISTRIBUTION_ID`,
+   `VITE_PROJECTVAULT_API_BASE_URL=https://api.lepomas.xyz`, and
+   `CORS_ALLOWED_ORIGINS=http://localhost:3000,https://app.lepomas.xyz`.
+8. Run one controlled Deploy workflow cutover, then verify
+   `https://app.lepomas.xyz` and browser CORS against `https://api.lepomas.xyz`.
 
 ## Controlled Demo Ingress
 

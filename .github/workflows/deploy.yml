@@ -29,6 +29,9 @@ env:
   PROJECT_STORAGE_LIMIT_BYTES: ${{ vars.PROJECT_STORAGE_LIMIT_BYTES }}
   S3_BUCKET: ${{ vars.S3_BUCKET }}
   S3_REGION: ${{ vars.S3_REGION }}
+  FRONTEND_S3_BUCKET: ${{ vars.FRONTEND_S3_BUCKET }}
+  FRONTEND_CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.FRONTEND_CLOUDFRONT_DISTRIBUTION_ID }}
+  VITE_PROJECTVAULT_API_BASE_URL: ${{ vars.VITE_PROJECTVAULT_API_BASE_URL }}
 
 jobs:
   deploy:
@@ -37,6 +40,29 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '26'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Test frontend
+        working-directory: frontend
+        run: npm test
+
+      - name: Typecheck frontend
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -118,3 +144,13 @@ jobs:
             --function-name "$LAMBDA_FUNCTION_NAME" \
             --image-uri "${{ steps.lambda-image.outputs.image }}" \
             --publish
+
+      - name: Upload frontend to S3
+        run: |
+          aws s3 sync frontend/dist "s3://$FRONTEND_S3_BUCKET" --delete
+
+      - name: Invalidate frontend CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "$FRONTEND_CLOUDFRONT_DISTRIBUTION_ID" \
+            --paths "/*"
