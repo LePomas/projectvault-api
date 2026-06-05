@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">ProjectVault social preview</title>
+  <desc id="desc">A clean ProjectVault app preview with project and document panels.</desc>
+  <defs>
+    <linearGradient id="page-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eef3f0"/>
+      <stop offset="0.48" stop-color="#f8fbfa"/>
+      <stop offset="1" stop-color="#dfe9e5"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#edf5f2"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-12%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#172026" flood-opacity="0.16"/>
+    </filter>
+    <filter id="soft-shadow" x="-18%" y="-18%" width="136%" height="136%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#172026" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#page-bg)"/>
+  <circle cx="1050" cy="88" r="166" fill="#cbe4dc" opacity="0.62"/>
+  <circle cx="152" cy="542" r="188" fill="#f3ded6" opacity="0.55"/>
+
+  <g transform="translate(84 78)">
+    <text x="0" y="0" fill="#5f6f6b" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="800" letter-spacing="2">PROJECTVAULT</text>
+    <text x="0" y="72" fill="#172026" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="64" font-weight="850">Secure project</text>
+    <text x="0" y="140" fill="#172026" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="64" font-weight="850">documents</text>
+    <text x="2" y="194" fill="#536560" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="29" font-weight="650">Secure access for project files</text>
+
+    <g transform="translate(0 244)">
+      <rect x="0" y="0" width="246" height="56" rx="8" fill="#1e6f5c"/>
+      <text x="25" y="37" fill="#ffffff" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="800">app.lepomas.xyz</text>
+    </g>
+  </g>
+
+  <g transform="translate(566 70)" filter="url(#shadow)">
+    <rect x="0" y="0" width="548" height="462" rx="20" fill="url(#panel)" stroke="#d4ddd9"/>
+    <rect x="0" y="0" width="548" height="70" rx="20" fill="#172026"/>
+    <circle cx="36" cy="35" r="8" fill="#f7d8cf"/>
+    <circle cx="62" cy="35" r="8" fill="#f3d36b"/>
+    <circle cx="88" cy="35" r="8" fill="#78c1a8"/>
+    <text x="418" y="43" fill="#d9ece4" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="800">API</text>
+    <rect x="456" y="22" width="58" height="26" rx="13" fill="#1e6f5c"/>
+
+    <g transform="translate(34 102)">
+      <rect width="162" height="300" rx="14" fill="#ffffff" stroke="#d4ddd9"/>
+      <rect x="22" y="24" width="72" height="12" rx="6" fill="#1e6f5c"/>
+      <rect x="22" y="56" width="112" height="10" rx="5" fill="#c7d3cf"/>
+      <rect x="22" y="92" width="118" height="46" rx="8" fill="#edf4f1" stroke="#d4ddd9"/>
+      <rect x="22" y="154" width="118" height="46" rx="8" fill="#edf4f1" stroke="#d4ddd9"/>
+      <rect x="22" y="216" width="118" height="46" rx="8" fill="#d9ece4" stroke="#bdd6cd"/>
+    </g>
+
+    <g transform="translate(226 102)">
+      <rect width="286" height="114" rx="14" fill="#ffffff" stroke="#d4ddd9"/>
+      <rect x="24" y="26" width="132" height="15" rx="7" fill="#172026"/>
+      <rect x="24" y="58" width="204" height="12" rx="6" fill="#bcc9c4"/>
+      <rect x="24" y="82" width="94" height="10" rx="5" fill="#d9ece4"/>
+      <g transform="translate(224 29)">
+        <rect x="0" y="22" width="42" height="34" rx="8" fill="#1e6f5c"/>
+        <path d="M11 22v-8c0-8 6-14 14-14s14 6 14 14v8h-8v-8c0-4-2-7-6-7s-6 3-6 7v8z" fill="#1e6f5c"/>
+        <circle cx="21" cy="39" r="5" fill="#ffffff"/>
+      </g>
+    </g>
+
+    <g transform="translate(226 244)" filter="url(#soft-shadow)">
+      <rect width="128" height="122" rx="14" fill="#ffffff" stroke="#d4ddd9"/>
+      <path d="M34 32h42l18 18v48H34z" fill="#edf4f1" stroke="#bdd6cd"/>
+      <path d="M76 32v18h18" fill="none" stroke="#78a895" stroke-width="4"/>
+      <rect x="34" y="74" width="52" height="8" rx="4" fill="#78a895"/>
+      <rect x="34" y="90" width="38" height="8" rx="4" fill="#c7d3cf"/>
+    </g>
+
+    <g transform="translate(384 244)" filter="url(#soft-shadow)">
+      <rect width="128" height="122" rx="14" fill="#ffffff" stroke="#d4ddd9"/>
+      <path d="M32 38h26l10 12h36v48H32z" fill="#f8ded6" stroke="#efb8aa"/>
+      <rect x="44" y="70" width="48" height="8" rx="4" fill="#b97968"/>
+      <rect x="44" y="88" width="34" height="8" rx="4" fill="#dcb2a7"/>
+    </g>
+  </g>
+</svg>
