@@ -34,6 +34,6 @@ This table tracks desired route and behavior status. `matching route` and
 | Frontend automated tests | CI runs Vitest, typecheck, and build for the frontend | Keep browser e2e opt-in/local for now | None |
 | Browser e2e smoke | Opt-in local Playwright smoke covers auth, project, member, and document flows with mocked API responses | Keep browser e2e local-only until frontend deployment is ready | Wire into CI later only if runtime cost is acceptable |
 | Public frontend hosting | CloudFront serves the Vite app from private S3 at `https://app.lepomas.xyz` with DNS-only Cloudflare CNAME | Static S3 and CloudFront hosting for `https://app.lepomas.xyz` | None |
-| Frontend CI/CD deploy | Deploy workflow builds, checks, uploads to S3, and invalidates CloudFront | Automated frontend deploy to S3 and CloudFront | None |
+| Frontend CI/CD deploy | Deploy Frontend workflow builds, checks, uploads to S3, and narrowly invalidates CloudFront | Automated frontend deploy to S3 and CloudFront | None |
 | Backend CORS for public frontend | API allows `http://localhost:3000` and `https://app.lepomas.xyz` | API accepts browser requests from the local and public frontend origins | None |
 | Controlled demo readiness | Live API health, frontend load, browser CORS, and owner-side frontend flow verified | Approved reviewer can reach both frontend and API | Verify reviewer IP allowlist before external review |

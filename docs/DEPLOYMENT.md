@@ -1,8 +1,8 @@
 # Deployment
 
 ProjectVault keeps local development and production deployment separate. The API
-can still run locally with Docker Compose and MinIO. The production CD workflow
-is defined for precreated AWS resources and does not provision infrastructure.
+can still run locally with Docker Compose and MinIO. The production CD workflows
+are defined for precreated AWS resources and do not provision infrastructure.
 
 ## Current Deployment State
 
@@ -25,14 +25,15 @@ AWS deployment path:
 - Done: ECS cluster `projectvault-prod`, service `projectvault-api`, and task
   definition `projectvault-api`.
 - Done: image-based Lambda function `projectvault-documents`.
-- Done: first successful backend/Lambda GitHub Actions Deploy workflow run.
+- Done: first successful backend/Lambda GitHub Actions Deploy Backend workflow
+  run.
 - Planned for controlled demo review: HTTPS API ingress at `api.lepomas.xyz` through an
   Application Load Balancer restricted by source IP allowlist.
 - Done: local controlled demo frontend under `frontend/`.
-- Planned for frontend: static S3 and CloudFront hosting at
-  `https://app.lepomas.xyz` with a DNS-only Cloudflare `CNAME`.
-- Pending: production frontend AWS resources and Cloudflare DNS; CORS currently
-  allows `http://localhost:3000`.
+- Done: static S3 and CloudFront frontend hosting at `https://app.lepomas.xyz`
+  with a DNS-only Cloudflare `CNAME`.
+- Done: frontend-only GitHub Actions Deploy Frontend workflow for S3 upload and
+  CloudFront invalidation.
 - Pending: infrastructure-as-code for AWS resources.
 - Pending: app-level secret loading from Secrets Manager for Lambda. The current
   Lambda environment was manually configured with `DATABASE_URL` after function
@@ -95,9 +96,10 @@ Set:
 VITE_PROJECTVAULT_API_BASE_URL=https://api.lepomas.xyz
 ```
 
-`PUBLIC_REGISTRATION_ENABLED` defaults to `false` in the deployment workflow
-when the GitHub variable is not set. For the controlled demo environment, set
-it to `true` only after HTTPS ingress is restricted to the approved source IPs.
+`PUBLIC_REGISTRATION_ENABLED` defaults to `false` in the backend deployment
+workflow when the GitHub variable is not set. For the controlled demo
+environment, set it to `true` only after HTTPS ingress is restricted to the
+approved source IPs.
 
 For the current production bucket, set:
 
@@ -107,7 +109,9 @@ S3_BUCKET=projectvault-prod-lepomas-681742559054-us-east-1-an
 
 ## Deployment Flow
 
-`.github/workflows/deploy.yml` runs on pushes to `main` and manual dispatches:
+`.github/workflows/deploy.yml` runs backend deploys on pushes to `main` and
+manual dispatches. Frontend-only changes under `frontend/**` are ignored by this
+workflow.
 
 1. Authenticate to AWS with GitHub OIDC.
 2. Build and push the FastAPI image from `Dockerfile` to ECR.
@@ -115,8 +119,6 @@ S3_BUCKET=projectvault-prod-lepomas-681742559054-us-east-1-an
 4. Download the current ECS task definition, render the new API image into it,
    and deploy it to the existing ECS service.
 5. Update the documents Lambda function to the new Lambda image URI.
-6. Install frontend dependencies, run the frontend checks, build the Vite app,
-   upload `frontend/dist` to the frontend S3 bucket, and invalidate CloudFront.
 
 The workflow sets these runtime values for the API container:
 
@@ -129,6 +131,16 @@ S3_PUBLIC_ENDPOINT_URL=
 ```
 
 Blank S3 endpoint values make the storage adapter use AWS S3's default endpoint.
+
+`.github/workflows/deploy-frontend.yml` runs frontend deploys on pushes to
+`main` that change `frontend/**`, and it also supports manual dispatches:
+
+1. Install frontend dependencies.
+2. Run the Vitest suite and TypeScript check.
+3. Build the Vite app.
+4. Upload `frontend/dist` to the frontend S3 bucket with `aws s3 sync`.
+5. Invalidate `/`, `/index.html`, `/social-preview.png`, and
+   `/social-preview.svg` in CloudFront.
 
 ## Frontend Boundary
 
@@ -176,7 +188,7 @@ Prepare these resources before the first frontend deploy workflow run:
    `FRONTEND_CLOUDFRONT_DISTRIBUTION_ID`,
    `VITE_PROJECTVAULT_API_BASE_URL=https://api.lepomas.xyz`, and
    `CORS_ALLOWED_ORIGINS=http://localhost:3000,https://app.lepomas.xyz`.
-8. Run one controlled Deploy workflow cutover, then verify
+8. Run one controlled Deploy Frontend workflow cutover, then verify
    `https://app.lepomas.xyz` and browser CORS against `https://api.lepomas.xyz`.
 
 ## Controlled Demo Ingress
@@ -197,7 +209,7 @@ allowlist:
    DNS name. Do not proxy this record, because the AWS security group must see
    the real client source IP.
 7. Set the GitHub production variable
-   `PUBLIC_REGISTRATION_ENABLED=true`, then run the Deploy workflow.
+   `PUBLIC_REGISTRATION_ENABLED=true`, then run the Deploy Backend workflow.
 
 Review smoke checks from an allowed source IP:
 
