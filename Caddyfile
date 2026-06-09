@@ -1,13 +1,24 @@
-api.lepomas.xyz {
-	reverse_proxy api:8000
-}
+# Cloudflare Tunnel terminates TLS at the edge.
+# Caddy handles plain HTTP routing by Host header inside the Docker network.
+:80 {
+	@api host api.lepomas.xyz
+	handle @api {
+		reverse_proxy api:8000
+	}
 
-app.lepomas.xyz {
-	root * /srv/frontend
-	file_server
-	try_files {path} /index.html
-}
+	@storage host storage.lepomas.xyz
+	handle @storage {
+		reverse_proxy minio:9000
+	}
 
-storage.lepomas.xyz {
-	reverse_proxy minio:9000
+	@app host app.lepomas.xyz
+	handle @app {
+		root * /srv/frontend
+		file_server
+		try_files {path} /index.html
+	}
+
+	handle {
+		respond 404
+	}
 }
