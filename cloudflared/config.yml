@@ -1,0 +1,8 @@
+ingress:
+  - hostname: api.lepomas.xyz
+    service: http://caddy:80
+  - hostname: app.lepomas.xyz
+    service: http://caddy:80
+  - hostname: storage.lepomas.xyz
+    service: http://caddy:80
+  - service: http_status:404
