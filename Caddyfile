@@ -1,0 +1,13 @@
+api.lepomas.xyz {
+	reverse_proxy api:8000
+}
+
+app.lepomas.xyz {
+	root * /srv/frontend
+	file_server
+	try_files {path} /index.html
+}
+
+storage.lepomas.xyz {
+	reverse_proxy minio:9000
+}

@@ -10,13 +10,9 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 env:
-  AWS_REGION: ${{ vars.AWS_REGION }}
-  FRONTEND_S3_BUCKET: ${{ vars.FRONTEND_S3_BUCKET }}
-  FRONTEND_CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.FRONTEND_CLOUDFRONT_DISTRIBUTION_ID }}
-  VITE_PROJECTVAULT_API_BASE_URL: ${{ vars.VITE_PROJECTVAULT_API_BASE_URL }}
+  VITE_PROJECTVAULT_API_BASE_URL: https://api.lepomas.xyz
 
 jobs:
   deploy:
@@ -49,17 +45,15 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Upload frontend to S3
-        run: aws s3 sync dist "s3://$FRONTEND_S3_BUCKET" --delete
-
-      - name: Invalidate frontend CloudFront cache
+      - name: Set up SSH key
         run: |
-          aws cloudfront create-invalidation \
-            --distribution-id "$FRONTEND_CLOUDFRONT_DISTRIBUTION_ID" \
-            --paths "/" "/index.html" "/social-preview.png" "/social-preview.svg"
+          install -m 600 -D /dev/null ~/.ssh/id_deploy
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_deploy
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+        working-directory: .
+
+      - name: Sync frontend dist to server
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/id_deploy -o StrictHostKeyChecking=no" \
+            dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/frontend/dist/

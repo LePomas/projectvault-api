@@ -1,0 +1,30 @@
+services:
+  api:
+    volumes:
+      - ./storage:/app/storage
+    environment:
+      APP_ENV: production
+      DOCUMENT_STORAGE_BACKEND: s3
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_PUBLIC_ENDPOINT_URL: https://storage.lepomas.xyz
+      CORS_ALLOWED_ORIGINS: https://app.lepomas.xyz
+      PUBLIC_REGISTRATION_ENABLED: "false"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./frontend/dist:/srv/frontend:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+
+volumes:
+  caddy-data:
+  caddy-config:
