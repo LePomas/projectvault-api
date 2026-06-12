@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.document import Document
-from app.models.project import Project, ProjectInvite, ProjectMember
+from app.models.project import Project, ProjectMember
 from app.models.user import User
 
 pytestmark = pytest.mark.integration
@@ -37,7 +37,6 @@ def test_seed_sample_data_creates_demo_dataset(
     users = db_session.scalars(select(User).order_by(User.login)).all()
     projects = db_session.scalars(select(Project).order_by(Project.name)).all()
     documents = db_session.scalars(select(Document).order_by(Document.filename)).all()
-    invites = db_session.scalars(select(ProjectInvite)).all()
 
     assert {user.login for user in users} == {"ana", "bob", "carla", "diego"}
     assert {project.name for project in projects} == {
@@ -49,10 +48,6 @@ def test_seed_sample_data_creates_demo_dataset(
         "alpha-contract.pdf",
         "alpha-notes.docx",
         "beta-brief.pdf",
-    }
-    assert len(invites) == 2
-    assert summary.pending_invites == {
-        "diego": "sample-gamma-diego-pending-token",
     }
 
     alpha = next(project for project in projects if project.name == "Project Alpha")
@@ -102,7 +97,6 @@ def test_seed_sample_data_is_rerunnable_and_keeps_non_demo_rows(
     assert db_session.scalar(select(Project).where(Project.name == "Project Alpha"))
     assert len(db_session.scalars(select(Project)).all()) == 3
     assert len(db_session.scalars(select(Document)).all()) == 3
-    assert len(db_session.scalars(select(ProjectInvite)).all()) == 2
     assert len(db_session.scalars(select(ProjectMember)).all()) == 6
 
 

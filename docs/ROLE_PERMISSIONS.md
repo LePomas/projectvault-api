@@ -13,8 +13,8 @@ Project access is represented by `project_members.role`.
 `participant` membership to an existing user. The caller must be a project
 owner. The route does not support owner grants.
 
-The `project_invites` table remains in the schema for now, but public token
-acceptance is not exposed by the API.
+There is no token-based invite/accept flow: membership is granted directly by
+the endpoint above.
 
 ## Matrix
 

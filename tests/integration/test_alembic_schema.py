@@ -31,14 +31,10 @@ def test_alembic_initial_schema_renders_current_postgresql_baseline() -> None:
     assert "CREATE TABLE projects" in rendered_sql
     assert "CREATE TABLE project_members" in rendered_sql
     assert "CREATE TABLE documents" in rendered_sql
-    assert "CREATE TABLE project_invites" in rendered_sql
-    assert "invited_login VARCHAR(50)" in rendered_sql
-    assert "invited_email VARCHAR(255)" in rendered_sql
-    assert "token_hash TEXT NOT NULL" in rendered_sql
     assert "CREATE INDEX idx_documents_status" in rendered_sql
     assert "CREATE TABLE user (" not in rendered_sql
     assert "CREATE TABLE project (" not in rendered_sql
     assert "CREATE TABLE project_member (" not in rendered_sql
     assert "CREATE TABLE document (" not in rendered_sql
-    assert "CREATE TABLE project_invite (" not in rendered_sql
-    assert "token VARCHAR(255)" not in rendered_sql
+    assert "project_invites" not in rendered_sql
+    assert "token_hash" not in rendered_sql

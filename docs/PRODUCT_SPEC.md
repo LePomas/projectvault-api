@@ -186,7 +186,6 @@ projects
 project_members
 documents
 document_versions
-project_invites
 storage_events
 audit_logs
 ```
@@ -260,22 +259,6 @@ document_id
 s3_key
 size_bytes
 version_number
-created_at
-```
-
-### project_invites
-
-Campos sugeridos:
-
-```text
-id
-project_id
-email
-login
-token_hash
-role: owner | participant
-expires_at
-accepted_at
 created_at
 ```
 

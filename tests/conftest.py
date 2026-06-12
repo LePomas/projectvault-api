@@ -12,14 +12,13 @@ os.environ.setdefault("DATABASE_URL", "sqlite://")
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
-from app.models import Document, Project, ProjectInvite, ProjectMember, User
+from app.models import Document, Project, ProjectMember, User
 
 TEST_TABLES = [
     User.__table__,
     Project.__table__,
     ProjectMember.__table__,
     Document.__table__,
-    ProjectInvite.__table__,
 ]
 TEST_LEVEL_MARKERS = {"unit", "integration", "e2e"}
 

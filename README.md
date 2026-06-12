@@ -167,8 +167,8 @@ In that local-shell mode, the script maps the Docker-only database host `db` to
 must also be able to write to `storage/documents`.
 
 The script is deterministic and can be rerun. It recreates only the sample
-projects, sample memberships, sample invites, and sample document files under
-the `sample/projects/...` storage prefix.
+projects, sample memberships, and sample document files under the
+`sample/projects/...` storage prefix.
 
 Sample users all use the password `super-secret-123`:
 
@@ -179,8 +179,7 @@ carla / carla@example.com
 diego / diego@example.com
 ```
 
-The script prints the current project/document IDs and the pending invite token
-for `diego` after each run.
+The script prints the current project and document IDs after each run.
 
 ## Testing
 

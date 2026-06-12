@@ -144,33 +144,6 @@ def upgrade() -> None:
         ),
     )
 
-    op.create_table(
-        "project_invites",
-        sa.Column("id", sa.BigInteger(), primary_key=True),
-        sa.Column("project_id", sa.BigInteger(), nullable=False),
-        sa.Column("invited_login", sa.String(length=50), nullable=True),
-        sa.Column("invited_email", sa.String(length=255), nullable=True),
-        sa.Column("token_hash", sa.Text(), nullable=False, unique=True),
-        sa.Column("role", sa.String(length=20), nullable=False),
-        sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("accepted_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.func.now(),
-            nullable=False,
-        ),
-        sa.CheckConstraint(
-            "role IN ('owner', 'participant')",
-            name="project_invites_role_check",
-        ),
-        sa.CheckConstraint(
-            "invited_login IS NOT NULL OR invited_email IS NOT NULL",
-            name="project_invites_target_check",
-        ),
-        sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
-    )
-
     op.create_index("idx_projects_owner_id", "projects", ["owner_id"])
     op.create_index("idx_projects_deleted_at", "projects", ["deleted_at"])
     op.create_index(
@@ -187,21 +160,9 @@ def upgrade() -> None:
     )
     op.create_index("idx_documents_deleted_at", "documents", ["deleted_at"])
     op.create_index("idx_documents_status", "documents", ["status"])
-    op.create_index(
-        "idx_project_invites_project_id",
-        "project_invites",
-        ["project_id"],
-    )
-    op.create_index(
-        "idx_project_invites_expires_at",
-        "project_invites",
-        ["expires_at"],
-    )
 
 
 def downgrade() -> None:
-    op.drop_index("idx_project_invites_expires_at", table_name="project_invites")
-    op.drop_index("idx_project_invites_project_id", table_name="project_invites")
     op.drop_index("idx_documents_status", table_name="documents")
     op.drop_index("idx_documents_deleted_at", table_name="documents")
     op.drop_index("idx_documents_uploaded_by_id", table_name="documents")
@@ -210,7 +171,6 @@ def downgrade() -> None:
     op.drop_index("idx_project_members_project_id", table_name="project_members")
     op.drop_index("idx_projects_deleted_at", table_name="projects")
     op.drop_index("idx_projects_owner_id", table_name="projects")
-    op.drop_table("project_invites")
     op.drop_table("documents")
     op.drop_table("project_members")
     op.drop_table("projects")

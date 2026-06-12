@@ -48,19 +48,6 @@ CREATE TABLE IF NOT EXISTS documents (
     deleted_at TIMESTAMPTZ
 );
 
-CREATE TABLE IF NOT EXISTS project_invites (
-    id BIGSERIAL PRIMARY KEY,
-    project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    invited_login VARCHAR(50),
-    invited_email VARCHAR(255),
-    token_hash TEXT NOT NULL UNIQUE,
-    role VARCHAR(20) NOT NULL CHECK (role IN ('owner', 'participant')),
-    expires_at TIMESTAMPTZ NOT NULL,
-    accepted_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CHECK (invited_login IS NOT NULL OR invited_email IS NOT NULL)
-);
-
 CREATE INDEX IF NOT EXISTS idx_projects_owner_id ON projects(owner_id);
 CREATE INDEX IF NOT EXISTS idx_projects_deleted_at ON projects(deleted_at);
 
@@ -71,8 +58,5 @@ CREATE INDEX IF NOT EXISTS idx_documents_project_id ON documents(project_id);
 CREATE INDEX IF NOT EXISTS idx_documents_uploaded_by_id ON documents(uploaded_by_id);
 CREATE INDEX IF NOT EXISTS idx_documents_deleted_at ON documents(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_documents_status ON documents(status);
-
-CREATE INDEX IF NOT EXISTS idx_project_invites_project_id ON project_invites(project_id);
-CREATE INDEX IF NOT EXISTS idx_project_invites_expires_at ON project_invites(expires_at);
 
 COMMIT;

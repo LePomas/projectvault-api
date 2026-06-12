@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import hashlib
 import shutil
 import sys
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 
 from sqlalchemy import create_engine, select
@@ -18,7 +17,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from app.core.config import settings  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
 from app.models.document import Document  # noqa: E402
-from app.models.project import Project, ProjectInvite, ProjectMember  # noqa: E402
+from app.models.project import Project, ProjectMember  # noqa: E402
 from app.models.user import User  # noqa: E402
 
 DEMO_PASSWORD = "super-secret-123"
@@ -53,20 +52,10 @@ class DemoDocument:
 
 
 @dataclass(frozen=True)
-class DemoInvite:
-    project_key: str
-    invited_login: str
-    role: str
-    token: str
-    accepted: bool
-
-
-@dataclass(frozen=True)
 class SeedSummary:
     users: dict[str, int]
     projects: dict[str, int]
     documents: dict[str, int]
-    pending_invites: dict[str, str]
 
 
 DEMO_USERS = (
@@ -126,23 +115,6 @@ DEMO_DOCUMENTS = (
     ),
 )
 
-DEMO_INVITES = (
-    DemoInvite(
-        project_key="alpha",
-        invited_login="bob",
-        role="participant",
-        token="sample-alpha-bob-accepted-token",
-        accepted=True,
-    ),
-    DemoInvite(
-        project_key="gamma",
-        invited_login="diego",
-        role="participant",
-        token="sample-gamma-diego-pending-token",
-        accepted=False,
-    ),
-)
-
 
 def seed_sample_data(
     db: Session,
@@ -155,14 +127,12 @@ def seed_sample_data(
     users = _upsert_users(db)
     projects = _create_projects(db, users)
     documents = _create_documents(db, storage_path, users, projects)
-    pending_invites = _create_invites(db, users, projects)
 
     db.commit()
     return SeedSummary(
         users={login: user.id for login, user in users.items()},
         projects={key: project.id for key, project in projects.items()},
         documents={filename: document.id for filename, document in documents.items()},
-        pending_invites=pending_invites,
     )
 
 
@@ -195,12 +165,6 @@ def _delete_sample_rows(db: Session, storage_path: Path) -> None:
         db.delete(document)
 
     if sample_project_ids:
-        for invite in db.scalars(
-            select(ProjectInvite).where(
-                ProjectInvite.project_id.in_(sample_project_ids)
-            )
-        ):
-            db.delete(invite)
         for member in db.scalars(
             select(ProjectMember).where(
                 ProjectMember.project_id.in_(sample_project_ids)
@@ -292,47 +256,6 @@ def _create_documents(
     return documents
 
 
-def _create_invites(
-    db: Session,
-    users: dict[str, User],
-    projects: dict[str, Project],
-) -> dict[str, str]:
-    pending_invites: dict[str, str] = {}
-    now = datetime.now(UTC)
-    for demo_invite in DEMO_INVITES:
-        invite = ProjectInvite(
-            project_id=projects[demo_invite.project_key].id,
-            invited_login=demo_invite.invited_login,
-            token_hash=_token_hash(demo_invite.token),
-            role=demo_invite.role,
-            expires_at=now + timedelta(days=7),
-            accepted_at=now if demo_invite.accepted else None,
-        )
-        db.add(invite)
-        if demo_invite.accepted:
-            member_exists = any(
-                login == demo_invite.invited_login
-                for login, _role in next(
-                    project.members
-                    for project in DEMO_PROJECTS
-                    if project.key == demo_invite.project_key
-                )
-            )
-            if not member_exists:
-                db.add(
-                    ProjectMember(
-                        project_id=projects[demo_invite.project_key].id,
-                        user_id=users[demo_invite.invited_login].id,
-                        role=demo_invite.role,
-                    )
-                )
-        else:
-            pending_invites[demo_invite.invited_login] = demo_invite.token
-
-    db.flush()
-    return pending_invites
-
-
 def _storage_key(project_id: int, filename: str) -> str:
     return str(PurePosixPath(SAMPLE_STORAGE_PREFIX, str(project_id), filename))
 
@@ -355,10 +278,6 @@ def _delete_storage_file(storage_path: Path, storage_key: str) -> None:
             shutil.rmtree(sample_root)
 
 
-def _token_hash(token: str) -> str:
-    return hashlib.sha256(token.encode()).hexdigest()
-
-
 def main() -> None:
     database_url = local_database_url(settings.database_url)
     if database_url != settings.database_url:
@@ -373,10 +292,6 @@ def main() -> None:
     print(f"Users: {summary.users}")
     print(f"Projects: {summary.projects}")
     print(f"Documents: {summary.documents}")
-    if summary.pending_invites:
-        print("Pending invite tokens:")
-        for login, token in summary.pending_invites.items():
-            print(f"  {login}: {token}")
 
 
 if __name__ == "__main__":
