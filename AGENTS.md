@@ -83,9 +83,13 @@ Only run `ruff format .` when formatting changes are intended.
 ## API Rules
 
 - Register route modules through `app/api/routes.py`.
-- Use plural REST resources such as `/projects` and `/documents`.
-- Use `PATCH` for partial updates.
-- Document renames use `PATCH /documents/{document_id}`. Keep the existing `PUT /documents/{document_id}` compatibility route unless routes, schemas, docs, and tests are deliberately updated together.
+- Business routes use singular resource roots (`/project`, `/document`); the only
+  plural route is the project list `GET /projects`. See
+  [docs/API_CONVENTIONS.md](docs/API_CONVENTIONS.md) for the full list.
+- Use `PATCH` for project info updates (`PATCH /project/{project_id}/info`).
+- Document renames use `PUT /document/{document_id}` (there is no PATCH rename
+  route). Do not reintroduce plural `/documents`/`/projects` business routes;
+  `tests/integration/test_projects.py` asserts the old plural routes are gone.
 - Do not use `GET` for state-changing actions.
 - Protected endpoints must depend on `get_current_user`.
 - Successful creates return `201`; reads and updates `200`; deletes `204`.
