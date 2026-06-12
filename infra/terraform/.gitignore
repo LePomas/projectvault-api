@@ -1,0 +1,11 @@
+# Local Terraform state & provider plugins — never commit
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Variable files may contain secrets (e.g. DATABASE_URL) — never commit
+*.tfvars
+*.auto.tfvars
+!terraform.tfvars.example

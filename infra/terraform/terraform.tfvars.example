@@ -1,0 +1,10 @@
+# Copy to terraform.tfvars (gitignored) and fill in, OR export TF_VAR_database_url.
+# All other inputs have defaults matching the live us-east-1 account.
+
+# Plaintext production database connection string. Keep this out of git.
+# Prefer instead: migrate the Lambda to read DATABASE_URL from Secrets Manager
+# at runtime (the role already has secretsmanager:GetSecretValue) and drop this.
+database_url = "postgresql+psycopg://USER:PASSWORD@HOST:5432/projectvault"
+
+# Override only if you redeploy a new image tag:
+# image_uri = "681742559054.dkr.ecr.us-east-1.amazonaws.com/projectvault-documents-lambda:<new-sha>"
