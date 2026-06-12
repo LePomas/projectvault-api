@@ -1,16 +1,14 @@
-@localBaseUrl@reviewBaseUrl@reviewAlbDnsName
+@localBaseUrl = http://localhost:8000
+@liveBaseUrl = https://api.lepomas.xyz
 # Default target for the collection.
-# - Local Docker Compose: keep localBaseUrl.
-# - Live mentor review after DNS works: change to reviewBaseUrl.
-@baseUrl
-# Live review notes:
-# - Use HTTPS only. There is no HTTP listener for the review ALB.
-# - Browser after DNS/CNAME:
+# - Local Docker Compose: set baseUrl to {{localBaseUrl}}.
+# - Live deployment (Radxa via Cloudflare Tunnel): set baseUrl to {{liveBaseUrl}}.
+@baseUrl = {{liveBaseUrl}}
+# Live deployment notes:
+# - HTTPS only, served through the Cloudflare Tunnel.
+# - Browser:
 #     https://api.lepomas.xyz/docs
 #     https://api.lepomas.xyz/health
-# - Before DNS/CNAME resolves locally, use curl with SNI preserved:
-#     curl --connect-to api.lepomas.xyz:443:projectvault-api-review-299417498.us-east-1.elb.amazonaws.com:443 https://api.lepomas.xyz/health
-#     curl -I --connect-to api.lepomas.xyz:443:projectvault-api-review-299417498.us-east-1.elb.amazonaws.com:443 https://api.lepomas.xyz/docs
 
 # Optional sample data:
 #   ./scripts/seed-sample-data.sh
@@ -37,16 +35,6 @@
 @documentId = paste-document-id-here
 @presignedDocumentId = paste-presigned-document-id-here
 @presignedUploadUrl = paste-presigned-upload-url-here
-
-### Live review - Health after DNS/CNAME
-GET {{reviewBaseUrl}}/health
-
-### Live review - Swagger UI after DNS/CNAME
-GET {{reviewBaseUrl}}/docs
-
-### Live review - OpenAPI JSON after DNS/CNAME
-GET {{reviewBaseUrl}}/openapi.json
-
 
 ### Health - Estado del servicio
 GET {{baseUrl}}/health
