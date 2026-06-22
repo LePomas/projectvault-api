@@ -11,6 +11,7 @@ from app.services.document_service import DocumentService
 class S3EventProcessingError(Exception):
     pass
 
+
 # This Lambda function is triggered by S3 ObjectCreated events. It processes the
 # event to determine which document upload has completed, and then calls the
 # DocumentService to finalize the upload process in the application.
