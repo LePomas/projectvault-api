@@ -1,5 +1,6 @@
 tunnel: 2eb3a453-cff1-4cd8-b730-37d9f0b90100
 credentials-file: /etc/cloudflared/credentials.json
+protocol: http2
 
 ingress:
   - hostname: api.lepomas.xyz
