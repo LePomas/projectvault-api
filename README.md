@@ -1,33 +1,77 @@
 # ProjectVault API
 
-Secure project profiles and document management API.
+> Secure, multi-tenant document vault: JWT-authenticated project workspaces with role-based access and event-driven, presigned-URL document uploads. Built as the capstone of the EPAM Python specialization.
 
-## Implemented Stack
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+![CI](https://github.com/LePomas/projectvault-api/actions/workflows/ci.yml/badge.svg)
 
-- Python 3.12+
-- FastAPI
-- PostgreSQL
-- Local filesystem document storage
-- MinIO-backed S3-compatible document storage for local development
-- SQLAlchemy
-- Docker Compose
-- Pydantic v2
-- JWT authentication
-- S3 event handler for finalizing pending uploads
-- Alembic initial schema baseline
-- React and Vite frontend for controlled demo workflows
-- GitHub Actions CI for lint, format check, tests, and Compose validation
-- GitHub Actions CD workflow for precreated AWS ECS, ECR, and Lambda resources
-- GitHub Actions frontend CD workflow for static S3 and CloudFront hosting
-- pytest
-- httpx
-- Ruff
-- TypeScript
+ProjectVault lets owners create project workspaces, grant participants access by
+login, and upload/download PDF and DOCX documents through presigned S3 URLs.
+Uploads are finalized **event-driven**: the client presigns, uploads straight to
+object storage, and an S3 `ObjectCreated` event triggers a handler that writes
+the final document metadata to PostgreSQL — no large file ever passes through
+the API process.
 
-## Planned / Roadmap
+## Demo
 
-- Forward database migrations beyond the initial Alembic baseline
-- Infrastructure-as-code for AWS resources, if needed later
+A React/Vite console exercises the full auth → project → member → document flow
+against the API.
+
+| Auth & capabilities | Project workspace |
+|---|---|
+| ![Auth screen](docs/assets/01-auth.png) | ![Dashboard](docs/assets/02-dashboard.png) |
+
+Run it yourself in two commands — see [Local development](#local-development).
+
+## What this project demonstrates
+
+- **AuthN/AuthZ** — JWT bearer auth (Argon2 password hashing), owner/participant
+  **role-based permissions** enforced per project.
+- **Event-driven uploads** — presign → direct-to-S3 upload → `ObjectCreated`
+  event → handler finalizes metadata. Keeps the API stateless and large files
+  off the request path.
+- **Pluggable storage** — one storage adapter runs the same API on the local
+  filesystem or any S3-compatible backend (MinIO locally, AWS S3 in the cloud).
+- **Clean layering** — routes → services → repositories → SQLAlchemy models,
+  with Pydantic v2 schemas at the edges.
+- **Test pyramid** — `unit` / `integration` / `e2e` pytest markers, enforced
+  one-per-test; Vitest + Playwright on the frontend.
+- **CI/CD** — GitHub Actions runs lint, format check, tests, and
+  `docker compose config` on every push; separate CD workflows build/push
+  images and deploy.
+- **Two deployment targets** — AWS (ECS for the API, container-image Lambda for
+  the event handler, S3 + CloudFront for the frontend) and a self-hosted Docker
+  Compose stack fronted by Caddy behind a Cloudflare Tunnel.
+- **Infrastructure as code** — Terraform for the AWS document-processing Lambda
+  path.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    user([User]) --> fe[React / Vite console]
+    fe -->|JWT REST| api[FastAPI app: routes -> services -> repositories]
+    api --> db[(PostgreSQL)]
+    api -->|presigned URL| s3[(S3 / MinIO)]
+    fe -->|direct upload| s3
+    s3 -->|ObjectCreated event| ev[S3 event handler]
+    ev -->|finalize metadata| db
+```
+
+Document upload is **two-phase and event-driven**: `presign-upload` returns a
+signed URL, the client `PUT`s the file straight to object storage, and the
+`ObjectCreated` event drives the handler
+(`app.lambda_handlers.s3_events`) that writes final metadata to PostgreSQL.
+`complete-upload` exists as a synchronous fallback.
+
+## Roadmap
+
+- Forward database migrations beyond the Alembic baseline.
+- Broaden Terraform coverage from the Lambda path to the full AWS environment.
 
 ## Local development
 
@@ -111,7 +155,8 @@ notification.
 ### 5. Frontend demo app
 
 The frontend lives under `frontend/` and is intentionally separate from the API
-runtime. It defaults to the live demo API at `https://api.lepomas.xyz`.
+runtime. It defaults to the API base `https://api.lepomas.xyz`; for local work,
+point it at `http://localhost:8000` (see below).
 
 ```bash
 cd frontend
@@ -132,7 +177,7 @@ Open:
 http://localhost:3000
 ```
 
-The deployed API currently allows CORS from `http://localhost:3000`. To point
+The API allows CORS from `http://localhost:3000` by default. To point
 the frontend at a different API, set:
 
 ```env
@@ -249,18 +294,15 @@ the frontend checks, builds the Vite app, uploads `frontend/dist` to the
 frontend S3 bucket, and invalidates the CloudFront paths needed for the SPA
 entrypoint and social preview assets.
 
-The CD workflows do not provision AWS infrastructure. Current live deployment
-setup includes ECR repositories and images, a production S3 bucket with
-ObjectCreated notification, RDS PostgreSQL, Secrets Manager JWT and
-`DATABASE_URL` secrets, an ECS service, an image-based documents Lambda, GitHub
-OIDC trust, deployment role permissions, production GitHub variables, and one
-successful backend Deploy workflow run. Controlled demo ingress is planned as
-`https://api.lepomas.xyz` through an HTTPS Application Load Balancer restricted
-by source IP allowlist. The frontend deploy path uses static S3 and CloudFront
-hosting at `https://app.lepomas.xyz`; infrastructure-as-code and forward
-migrations after the baseline remain future work. See
-`docs/DEPLOYMENT.md` for the current resources, variables, and live-review
-runbook.
+The CD workflows do not provision infrastructure; they deploy into precreated
+resources. The project has been deployed two ways: an AWS environment (ECR
+images, an ECS service for the API, an image-based documents Lambda wired to an
+S3 `ObjectCreated` notification, RDS PostgreSQL, Secrets Manager for the JWT and
+`DATABASE_URL` secrets, GitHub OIDC trust, and static S3 + CloudFront for the
+frontend), and a self-hosted Docker Compose stack fronted by Caddy behind a
+Cloudflare Tunnel (see `docs/DEPLOYMENT.md`). No public demo endpoint is
+exposed at the moment. Forward migrations after the Alembic baseline and broader
+Terraform coverage remain future work.
 
 ## Project structure
 
