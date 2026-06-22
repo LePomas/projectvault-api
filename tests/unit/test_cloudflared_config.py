@@ -32,8 +32,8 @@ def test_cloudflared_token_comes_from_env_not_cli() -> None:
     cmd = PROD_COMPOSE.read_text()
     assert "TUNNEL_TOKEN" in cmd
     # Confirm it is wired as an env var, not embedded in the command string
-    lines = [l for l in cmd.splitlines() if "command:" in l]
-    assert all("--token" not in l for l in lines)
+    lines = [line for line in cmd.splitlines() if "command:" in line]
+    assert all("--token" not in line for line in lines)
 
 
 def test_cloudflared_config_protocol_is_http2() -> None:

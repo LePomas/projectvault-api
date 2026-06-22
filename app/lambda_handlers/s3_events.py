@@ -11,7 +11,9 @@ from app.services.document_service import DocumentService
 class S3EventProcessingError(Exception):
     pass
 
-# This Lambda function is triggered by S3 ObjectCreated events. It processes the event to determine which document upload has completed, and then calls the DocumentService to finalize the upload process in the application.
+# This Lambda function is triggered by S3 ObjectCreated events. It processes the
+# event to determine which document upload has completed, and then calls the
+# DocumentService to finalize the upload process in the application.
 def handler(event: dict[str, Any], _context: object) -> dict[str, Any]:
     results: list[dict[str, Any]] = []
     failures: list[dict[str, Any]] = []
@@ -33,7 +35,7 @@ def handler(event: dict[str, Any], _context: object) -> dict[str, Any]:
                 }
             )
             continue
-        # At this point, we have a valid record for our bucket, so we attempt to complete the upload process.
+        # Valid record for our bucket, so we attempt to complete the upload.
         try:
             with SessionLocal() as db:
                 result = DocumentService(db).complete_upload_by_storage_key(storage_key)
